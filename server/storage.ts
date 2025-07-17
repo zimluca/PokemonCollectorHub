@@ -4,6 +4,8 @@ import {
   type Collection, type InsertCollection, type ProductType, type InsertProductType,
   type Product, type InsertProduct, type UserCollection, type InsertUserCollection
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, and, like, or, desc, ilike } from "drizzle-orm";
 
 export interface IStorage {
   // User methods
@@ -546,4 +548,151 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export class DatabaseStorage implements IStorage {
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
+    return user;
+  }
+
+  async getArticles(language?: string): Promise<Article[]> {
+    if (language) {
+      return await db.select().from(articles).where(eq(articles.language, language)).orderBy(desc(articles.publishedAt));
+    }
+    return await db.select().from(articles).orderBy(desc(articles.publishedAt));
+  }
+
+  async getArticle(id: number): Promise<Article | undefined> {
+    const [article] = await db.select().from(articles).where(eq(articles.id, id));
+    return article || undefined;
+  }
+
+  async createArticle(insertArticle: InsertArticle): Promise<Article> {
+    const [article] = await db
+      .insert(articles)
+      .values(insertArticle)
+      .returning();
+    return article;
+  }
+
+  async getCollections(): Promise<Collection[]> {
+    return await db.select().from(collections);
+  }
+
+  async getCollection(id: number): Promise<Collection | undefined> {
+    const [collection] = await db.select().from(collections).where(eq(collections.id, id));
+    return collection || undefined;
+  }
+
+  async createCollection(insertCollection: InsertCollection): Promise<Collection> {
+    const [collection] = await db
+      .insert(collections)
+      .values(insertCollection)
+      .returning();
+    return collection;
+  }
+
+  async getProductTypes(): Promise<ProductType[]> {
+    return await db.select().from(productTypes);
+  }
+
+  async getProductType(id: number): Promise<ProductType | undefined> {
+    const [productType] = await db.select().from(productTypes).where(eq(productTypes.id, id));
+    return productType || undefined;
+  }
+
+  async createProductType(insertProductType: InsertProductType): Promise<ProductType> {
+    const [productType] = await db
+      .insert(productTypes)
+      .values(insertProductType)
+      .returning();
+    return productType;
+  }
+
+  async getProducts(filters?: {
+    collectionId?: number;
+    productTypeId?: number;
+    language?: string;
+    search?: string;
+  }): Promise<Product[]> {
+    let query = db.select().from(products);
+    
+    const conditions = [];
+    if (filters?.collectionId) {
+      conditions.push(eq(products.collectionId, filters.collectionId));
+    }
+    if (filters?.productTypeId) {
+      conditions.push(eq(products.productTypeId, filters.productTypeId));
+    }
+    if (filters?.language) {
+      conditions.push(eq(products.language, filters.language));
+    }
+    if (filters?.search) {
+      conditions.push(
+        or(
+          ilike(products.name, `%${filters.search}%`),
+          ilike(products.nameIt, `%${filters.search}%`),
+          ilike(products.description, `%${filters.search}%`),
+          ilike(products.descriptionIt, `%${filters.search}%`)
+        )
+      );
+    }
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    return await query;
+  }
+
+  async getProduct(id: number): Promise<Product | undefined> {
+    const [product] = await db.select().from(products).where(eq(products.id, id));
+    return product || undefined;
+  }
+
+  async createProduct(insertProduct: InsertProduct): Promise<Product> {
+    const [product] = await db
+      .insert(products)
+      .values(insertProduct)
+      .returning();
+    return product;
+  }
+
+  async getUserCollection(userId: number): Promise<UserCollection[]> {
+    return await db.select().from(userCollections).where(eq(userCollections.userId, userId));
+  }
+
+  async addToUserCollection(insertUserCollection: InsertUserCollection): Promise<UserCollection> {
+    const [userCollection] = await db
+      .insert(userCollections)
+      .values(insertUserCollection)
+      .returning();
+    return userCollection;
+  }
+
+  async removeFromUserCollection(userId: number, productId: number): Promise<boolean> {
+    const result = await db
+      .delete(userCollections)
+      .where(
+        and(
+          eq(userCollections.userId, userId),
+          eq(userCollections.productId, productId)
+        )
+      );
+    return result.rowCount > 0;
+  }
+}
+
+export const storage = new DatabaseStorage();

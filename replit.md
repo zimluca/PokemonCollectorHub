@@ -21,11 +21,12 @@ Preferred communication style: Simple, everyday language.
 
 ### Backend Architecture
 - **Framework**: Express.js with TypeScript
-- **Database**: PostgreSQL with Drizzle ORM
+- **Database**: PostgreSQL with Drizzle ORM (migrated from in-memory storage)
 - **Database Provider**: Neon Database (serverless PostgreSQL)
 - **Validation**: Zod schemas for type-safe API validation
 - **API Pattern**: RESTful API with JSON responses
 - **Error Handling**: Centralized error middleware
+- **Data Initialization**: Database seeding with comprehensive Pokemon card data
 
 ### Database Schema
 The application uses a PostgreSQL database with the following main entities:
@@ -46,7 +47,8 @@ The application uses a PostgreSQL database with the following main entities:
 
 ### Backend Components
 - **Routes**: RESTful endpoints for articles, collections, products, and user collections
-- **Storage**: Abstract storage interface with in-memory implementation (prepared for database integration)
+- **Storage**: Abstract storage interface with PostgreSQL implementation via Drizzle ORM
+- **Database**: Full PostgreSQL integration with seeded Pokemon card data
 - **Middleware**: Request logging, JSON parsing, error handling
 - **Development**: Vite integration for hot module replacement
 
@@ -58,7 +60,7 @@ The application uses a PostgreSQL database with the following main entities:
 
 1. **Client Requests**: Frontend makes API calls using TanStack Query
 2. **API Processing**: Express routes handle requests, validate with Zod schemas
-3. **Data Storage**: Storage layer abstracts database operations (currently in-memory)
+3. **Data Storage**: Storage layer abstracts database operations via PostgreSQL and Drizzle ORM
 4. **Response**: JSON responses sent back to client
 5. **State Management**: TanStack Query caches and manages server state
 6. **UI Updates**: React components re-render based on query state changes
