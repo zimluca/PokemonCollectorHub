@@ -30,6 +30,8 @@ const resources = {
       
       // Database
       pokemonCardDatabase: 'Pokemon Card Database',
+      chooseLanguage: 'Choose Your Language',
+      selectPreferredLanguage: 'Select your preferred language to view cards and content',
       searchPlaceholder: 'Search cards, sets, or products...',
       allSets: 'All Sets',
       allLanguages: 'All Languages',
@@ -105,6 +107,8 @@ const resources = {
       
       // Database
       pokemonCardDatabase: 'Database Carte Pokemon',
+      chooseLanguage: 'Scegli la Tua Lingua',
+      selectPreferredLanguage: 'Seleziona la tua lingua preferita per visualizzare carte e contenuti',
       searchPlaceholder: 'Cerca carte, set o prodotti...',
       allSets: 'Tutti i Set',
       allLanguages: 'Tutte le Lingue',

@@ -63,48 +63,59 @@ export class MemStorage implements IStorage {
 
   private initializeData() {
     // Initialize product types
-    const cardType = this.createProductType({
+    const cardType = {
+      id: this.productTypeIdCounter++,
       name: "Single Cards",
       nameIt: "Carte Singole",
       description: "Individual Pokemon cards",
       descriptionIt: "Carte Pokemon individuali"
-    });
+    };
+    this.productTypes.set(cardType.id, cardType);
 
-    const packType = this.createProductType({
+    const packType = {
+      id: this.productTypeIdCounter++,
       name: "Booster Packs",
       nameIt: "Buste",
       description: "Booster packs containing random cards",
       descriptionIt: "Buste contenenti carte casuali"
-    });
+    };
+    this.productTypes.set(packType.id, packType);
 
-    const etbType = this.createProductType({
+    const etbType = {
+      id: this.productTypeIdCounter++,
       name: "Elite Trainer Box",
       nameIt: "Elite Trainer Box",
       description: "Complete trainer boxes with packs and accessories",
       descriptionIt: "Scatole complete con buste e accessori"
-    });
+    };
+    this.productTypes.set(etbType.id, etbType);
 
     // Initialize collections
-    const paldea = this.createCollection({
+    const paldea = {
+      id: this.collectionIdCounter++,
       name: "Paldea Evolved",
       nameIt: "Paldea Evolved",
       description: "The latest expansion featuring Paldea region Pokemon",
       descriptionIt: "L'ultima espansione con Pokemon della regione di Paldea",
       imageUrl: "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=400&h=300&fit=crop",
       releaseDate: new Date("2024-06-09")
-    });
+    };
+    this.collections.set(paldea.id, paldea);
 
-    const scarletViolet = this.createCollection({
+    const scarletViolet = {
+      id: this.collectionIdCounter++,
       name: "Scarlet & Violet",
       nameIt: "Scarlatto e Violetto",
       description: "Base set of the Scarlet & Violet series",
       descriptionIt: "Set base della serie Scarlatto e Violetto",
       imageUrl: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop",
       releaseDate: new Date("2023-03-31")
-    });
+    };
+    this.collections.set(scarletViolet.id, scarletViolet);
 
-    // Initialize sample products
-    this.createProduct({
+    // Initialize sample products - English cards
+    const charizardEN = {
+      id: this.productIdCounter++,
       name: "Charizard VMAX",
       nameIt: "Charizard VMAX",
       description: "Rare Charizard VMAX card",
@@ -120,9 +131,193 @@ export class MemStorage implements IStorage {
         ebay: 95.00,
         tcgplayer: 92.50
       }
-    });
+    };
+    this.products.set(charizardEN.id, charizardEN);
 
-    this.createProduct({
+    const pikachuEN = {
+      id: this.productIdCounter++,
+      name: "Pikachu V",
+      nameIt: "Pikachu V",
+      description: "Electric-type Pokemon V card",
+      descriptionIt: "Carta Pokemon V di tipo Elettro",
+      collectionId: scarletViolet.id,
+      productTypeId: cardType.id,
+      cardNumber: "025/198",
+      rarity: "Ultra Rare",
+      language: "en",
+      imageUrl: "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=300&h=400&fit=crop",
+      prices: {
+        cardmarket: 45.99,
+        ebay: 52.00,
+        tcgplayer: 48.75
+      }
+    };
+    this.products.set(pikachuEN.id, pikachuEN);
+
+    const mewtwoEN = {
+      id: this.productIdCounter++,
+      name: "Mewtwo EX",
+      nameIt: "Mewtwo EX",
+      description: "Psychic-type legendary Pokemon EX",
+      descriptionIt: "Pokemon EX leggendario di tipo Psico",
+      collectionId: scarletViolet.id,
+      productTypeId: cardType.id,
+      cardNumber: "150/198",
+      rarity: "EX",
+      language: "en",
+      imageUrl: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=300&h=400&fit=crop",
+      prices: {
+        cardmarket: 67.50,
+        ebay: 72.00,
+        tcgplayer: 69.25
+      }
+    };
+    this.products.set(mewtwoEN.id, mewtwoEN);
+
+    const garchompEN = {
+      id: this.productIdCounter++,
+      name: "Garchomp V",
+      nameIt: "Garchomp V",
+      description: "Dragon-type Pokemon V card",
+      descriptionIt: "Carta Pokemon V di tipo Drago",
+      collectionId: paldea.id,
+      productTypeId: cardType.id,
+      cardNumber: "445/189",
+      rarity: "Ultra Rare",
+      language: "en",
+      imageUrl: "https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?w=300&h=400&fit=crop",
+      prices: {
+        cardmarket: 32.99,
+        ebay: 38.00,
+        tcgplayer: 35.50
+      }
+    };
+    this.products.set(garchompEN.id, garchompEN);
+
+    const lucarioEN = {
+      id: this.productIdCounter++,
+      name: "Lucario VMAX",
+      nameIt: "Lucario VMAX",
+      description: "Fighting-type Pokemon VMAX",
+      descriptionIt: "Pokemon VMAX di tipo Lotta",
+      collectionId: scarletViolet.id,
+      productTypeId: cardType.id,
+      cardNumber: "448/198",
+      rarity: "VMAX",
+      language: "en",
+      imageUrl: "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=300&h=400&fit=crop",
+      prices: {
+        cardmarket: 78.99,
+        ebay: 85.00,
+        tcgplayer: 81.25
+      }
+    };
+    this.products.set(lucarioEN.id, lucarioEN);
+
+    // Italian cards
+    const charizardIT = {
+      id: this.productIdCounter++,
+      name: "Charizard VMAX",
+      nameIt: "Charizard VMAX",
+      description: "Rare Charizard VMAX card",
+      descriptionIt: "Carta rara Charizard VMAX",
+      collectionId: paldea.id,
+      productTypeId: cardType.id,
+      cardNumber: "020/189",
+      rarity: "Rare",
+      language: "it",
+      imageUrl: "https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?w=300&h=400&fit=crop",
+      prices: {
+        cardmarket: 75.99,
+        ebay: 82.00,
+        tcgplayer: 78.50
+      }
+    };
+    this.products.set(charizardIT.id, charizardIT);
+
+    const pikachuIT = {
+      id: this.productIdCounter++,
+      name: "Pikachu V",
+      nameIt: "Pikachu V",
+      description: "Electric-type Pokemon V card",
+      descriptionIt: "Carta Pokemon V di tipo Elettro",
+      collectionId: scarletViolet.id,
+      productTypeId: cardType.id,
+      cardNumber: "025/198",
+      rarity: "Ultra Rare",
+      language: "it",
+      imageUrl: "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=300&h=400&fit=crop",
+      prices: {
+        cardmarket: 38.99,
+        ebay: 44.00,
+        tcgplayer: 41.25
+      }
+    };
+    this.products.set(pikachuIT.id, pikachuIT);
+
+    const mewtwoIT = {
+      id: this.productIdCounter++,
+      name: "Mewtwo EX",
+      nameIt: "Mewtwo EX",
+      description: "Psychic-type legendary Pokemon EX",
+      descriptionIt: "Pokemon EX leggendario di tipo Psico",
+      collectionId: scarletViolet.id,
+      productTypeId: cardType.id,
+      cardNumber: "150/198",
+      rarity: "EX",
+      language: "it",
+      imageUrl: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=300&h=400&fit=crop",
+      prices: {
+        cardmarket: 58.50,
+        ebay: 63.00,
+        tcgplayer: 60.25
+      }
+    };
+    this.products.set(mewtwoIT.id, mewtwoIT);
+
+    const garchompIT = {
+      id: this.productIdCounter++,
+      name: "Garchomp V",
+      nameIt: "Garchomp V",
+      description: "Dragon-type Pokemon V card",
+      descriptionIt: "Carta Pokemon V di tipo Drago",
+      collectionId: paldea.id,
+      productTypeId: cardType.id,
+      cardNumber: "445/189",
+      rarity: "Ultra Rare",
+      language: "it",
+      imageUrl: "https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?w=300&h=400&fit=crop",
+      prices: {
+        cardmarket: 28.99,
+        ebay: 33.00,
+        tcgplayer: 30.50
+      }
+    };
+    this.products.set(garchompIT.id, garchompIT);
+
+    const lucarioIT = {
+      id: this.productIdCounter++,
+      name: "Lucario VMAX",
+      nameIt: "Lucario VMAX",
+      description: "Fighting-type Pokemon VMAX",
+      descriptionIt: "Pokemon VMAX di tipo Lotta",
+      collectionId: scarletViolet.id,
+      productTypeId: cardType.id,
+      cardNumber: "448/198",
+      rarity: "VMAX",
+      language: "it",
+      imageUrl: "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=300&h=400&fit=crop",
+      prices: {
+        cardmarket: 68.99,
+        ebay: 74.00,
+        tcgplayer: 71.25
+      }
+    };
+    this.products.set(lucarioIT.id, lucarioIT);
+
+    // Add some booster packs
+    const paldeaPack = {
+      id: this.productIdCounter++,
       name: "Paldea Evolved Booster Pack",
       nameIt: "Busta Paldea Evolved",
       description: "11 card booster pack",
@@ -138,10 +333,52 @@ export class MemStorage implements IStorage {
         ebay: 4.50,
         tcgplayer: 4.25
       }
-    });
+    };
+    this.products.set(paldeaPack.id, paldeaPack);
+
+    const scarletPack = {
+      id: this.productIdCounter++,
+      name: "Scarlet & Violet Booster Pack",
+      nameIt: "Busta Scarlatto e Violetto",
+      description: "11 card booster pack",
+      descriptionIt: "Busta da 11 carte",
+      collectionId: scarletViolet.id,
+      productTypeId: packType.id,
+      cardNumber: null,
+      rarity: null,
+      language: "en",
+      imageUrl: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=300&h=400&fit=crop",
+      prices: {
+        cardmarket: 4.25,
+        ebay: 4.75,
+        tcgplayer: 4.50
+      }
+    };
+    this.products.set(scarletPack.id, scarletPack);
+
+    const paldeaETB = {
+      id: this.productIdCounter++,
+      name: "Paldea Evolved Elite Trainer Box",
+      nameIt: "Elite Trainer Box Paldea Evolved",
+      description: "Contains 9 booster packs and accessories",
+      descriptionIt: "Contiene 9 buste e accessori",
+      collectionId: paldea.id,
+      productTypeId: etbType.id,
+      cardNumber: null,
+      rarity: null,
+      language: "en",
+      imageUrl: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=300&h=400&fit=crop",
+      prices: {
+        cardmarket: 39.99,
+        ebay: 45.00,
+        tcgplayer: 42.50
+      }
+    };
+    this.products.set(paldeaETB.id, paldeaETB);
 
     // Initialize sample articles
-    this.createArticle({
+    const featuredArticle = {
+      id: this.articleIdCounter++,
       title: "Paldea Evolved: Complete Set Review & Investment Guide",
       content: "Discover the most valuable cards from the latest expansion and learn which ones are worth adding to your collection.",
       excerpt: "Complete guide to Paldea Evolved set with investment tips",
@@ -149,10 +386,13 @@ export class MemStorage implements IStorage {
       category: "Featured",
       language: "en",
       imageUrl: "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=800&h=400&fit=crop",
-      featured: true
-    });
+      featured: true,
+      publishedAt: new Date()
+    };
+    this.articles.set(featuredArticle.id, featuredArticle);
 
-    this.createArticle({
+    const strategyArticle = {
+      id: this.articleIdCounter++,
       title: "Pack Opening Strategy: Maximizing Your Pulls",
       content: "Learn the best techniques and timing for opening booster packs to get the most value.",
       excerpt: "Best practices for booster pack opening",
@@ -160,8 +400,10 @@ export class MemStorage implements IStorage {
       category: "Strategy",
       language: "en",
       imageUrl: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=200&fit=crop",
-      featured: false
-    });
+      featured: false,
+      publishedAt: new Date()
+    };
+    this.articles.set(strategyArticle.id, strategyArticle);
   }
 
   // User methods

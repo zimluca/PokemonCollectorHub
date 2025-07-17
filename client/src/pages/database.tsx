@@ -10,11 +10,11 @@ import { Search, Plus, Heart, Languages, Flame, Star, TrendingUp, Clock } from '
 import type { Product, Collection, ProductType } from '@shared/schema';
 
 export default function Database() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCollection, setSelectedCollection] = useState<string>('all');
   const [selectedType, setSelectedType] = useState<string>('all');
-  const [selectedLanguage, setSelectedLanguage] = useState<string>('all');
+  const [selectedLanguage, setSelectedLanguage] = useState<string>(i18n.language);
 
   const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
     queryKey: ['/api/products', {
@@ -67,6 +67,34 @@ export default function Database() {
           {t('pokemonCardDatabase')}
         </h1>
 
+        {/* Language Selection Banner */}
+        <div className="bg-gradient-to-r from-pokemon-blue to-pokemon-purple text-white rounded-xl p-6 mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold mb-2">{t('chooseLanguage')}</h2>
+              <p className="text-blue-100">{t('selectPreferredLanguage')}</p>
+            </div>
+            <div className="flex gap-3">
+              <Button
+                onClick={() => setSelectedLanguage('en')}
+                variant={selectedLanguage === 'en' ? 'secondary' : 'outline'}
+                className={selectedLanguage === 'en' ? 'bg-white text-pokemon-blue' : 'border-white text-white hover:bg-white hover:text-pokemon-blue'}
+              >
+                <Languages className="h-4 w-4 mr-2" />
+                English
+              </Button>
+              <Button
+                onClick={() => setSelectedLanguage('it')}
+                variant={selectedLanguage === 'it' ? 'secondary' : 'outline'}
+                className={selectedLanguage === 'it' ? 'bg-white text-pokemon-blue' : 'border-white text-white hover:bg-white hover:text-pokemon-blue'}
+              >
+                <Languages className="h-4 w-4 mr-2" />
+                Italiano
+              </Button>
+            </div>
+          </div>
+        </div>
+
         {/* Search & Filters */}
         <div className="bg-gray-50 rounded-xl p-6 mb-8">
           <div className="flex flex-col lg:flex-row gap-4 mb-6">
@@ -94,19 +122,6 @@ export default function Database() {
                       {collection.name}
                     </SelectItem>
                   ))}
-                </SelectContent>
-              </Select>
-
-              <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder={t('allLanguages')} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t('allLanguages')}</SelectItem>
-                  <SelectItem value="en">English</SelectItem>
-                  <SelectItem value="it">Italian</SelectItem>
-                  <SelectItem value="jp">Japanese</SelectItem>
-                  <SelectItem value="de">German</SelectItem>
                 </SelectContent>
               </Select>
 
