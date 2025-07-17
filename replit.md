@@ -26,7 +26,7 @@ Preferred communication style: Simple, everyday language.
 - **Validation**: Zod schemas for type-safe API validation
 - **API Pattern**: RESTful API with JSON responses
 - **Error Handling**: Centralized error middleware
-- **Data Initialization**: Database seeding with comprehensive Pokemon card data
+- **Data Initialization**: Database seeding with comprehensive Pokemon card data and authentic official card images
 
 ### Database Schema
 The application uses a PostgreSQL database with the following main entities:
@@ -48,7 +48,7 @@ The application uses a PostgreSQL database with the following main entities:
 ### Backend Components
 - **Routes**: RESTful endpoints for articles, collections, products, and user collections
 - **Storage**: Abstract storage interface with PostgreSQL implementation via Drizzle ORM
-- **Database**: Full PostgreSQL integration with seeded Pokemon card data
+- **Database**: Full PostgreSQL integration with seeded Pokemon card data including all V/ex/VMAX cards with authentic official images
 - **Middleware**: Request logging, JSON parsing, error handling
 - **Development**: Vite integration for hot module replacement
 

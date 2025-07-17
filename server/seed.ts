@@ -53,143 +53,300 @@ async function seedDatabase() {
     releaseDate: new Date("2023-03-31")
   }).returning();
 
-  // Create English cards
-  const englishCards = [
+  // Create English cards - Scarlet & Violet Base Set ex cards
+  const scarletVioletExCards = [
     {
-      name: "Charizard VMAX",
-      nameIt: "Charizard VMAX",
-      description: "Rare Charizard VMAX card",
-      descriptionIt: "Carta rara Charizard VMAX",
-      collectionId: paldea.id,
+      name: "Koraidon ex",
+      nameIt: "Koraidon ex",
+      description: "Legendary Fighting-type Pokemon ex",
+      descriptionIt: "Pokemon ex leggendario di tipo Lotta",
+      collectionId: scarletViolet.id,
       productTypeId: cardType.id,
-      cardNumber: "020/189",
-      rarity: "Rare",
+      cardNumber: "125/198",
+      rarity: "Ultra Rare",
       language: "en",
-      imageUrl: "https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?w=300&h=400&fit=crop",
+      imageUrl: "https://dz3we2x72f7ol.cloudfront.net/expansions/scarlet-violet/en-us/SV01_EN_125.png",
       prices: { cardmarket: 89.99, ebay: 95.00, tcgplayer: 92.50 }
     },
     {
-      name: "Pikachu V",
-      nameIt: "Pikachu V",
-      description: "Electric-type Pokemon V card",
-      descriptionIt: "Carta Pokemon V di tipo Elettro",
+      name: "Miraidon ex",
+      nameIt: "Miraidon ex",
+      description: "Legendary Electric-type Pokemon ex",
+      descriptionIt: "Pokemon ex leggendario di tipo Elettro",
       collectionId: scarletViolet.id,
       productTypeId: cardType.id,
-      cardNumber: "025/198",
+      cardNumber: "81/198",
       rarity: "Ultra Rare",
       language: "en",
-      imageUrl: "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=300&h=400&fit=crop",
-      prices: { cardmarket: 45.99, ebay: 52.00, tcgplayer: 48.75 }
+      imageUrl: "https://dz3we2x72f7ol.cloudfront.net/expansions/scarlet-violet/en-us/SV01_EN_81.png",
+      prices: { cardmarket: 78.99, ebay: 82.00, tcgplayer: 80.25 }
     },
     {
-      name: "Mewtwo EX",
-      nameIt: "Mewtwo EX",
-      description: "Psychic-type legendary Pokemon EX",
-      descriptionIt: "Pokemon EX leggendario di tipo Psico",
+      name: "Spidops ex",
+      nameIt: "Spidops ex",
+      description: "Bug-type Pokemon ex",
+      descriptionIt: "Pokemon ex di tipo Coleottero",
       collectionId: scarletViolet.id,
       productTypeId: cardType.id,
-      cardNumber: "150/198",
-      rarity: "EX",
-      language: "en",
-      imageUrl: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=300&h=400&fit=crop",
-      prices: { cardmarket: 67.50, ebay: 72.00, tcgplayer: 69.25 }
-    },
-    {
-      name: "Garchomp V",
-      nameIt: "Garchomp V",
-      description: "Dragon-type Pokemon V card",
-      descriptionIt: "Carta Pokemon V di tipo Drago",
-      collectionId: paldea.id,
-      productTypeId: cardType.id,
-      cardNumber: "445/189",
+      cardNumber: "19/198",
       rarity: "Ultra Rare",
       language: "en",
-      imageUrl: "https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?w=300&h=400&fit=crop",
-      prices: { cardmarket: 32.99, ebay: 38.00, tcgplayer: 35.50 }
+      imageUrl: "https://dz3we2x72f7ol.cloudfront.net/expansions/scarlet-violet/en-us/SV01_EN_19.png",
+      prices: { cardmarket: 12.99, ebay: 15.00, tcgplayer: 13.75 }
     },
     {
-      name: "Lucario VMAX",
-      nameIt: "Lucario VMAX",
-      description: "Fighting-type Pokemon VMAX",
-      descriptionIt: "Pokemon VMAX di tipo Lotta",
+      name: "Arcanine ex",
+      nameIt: "Arcanine ex",
+      description: "Fire-type Pokemon ex",
+      descriptionIt: "Pokemon ex di tipo Fuoco",
       collectionId: scarletViolet.id,
       productTypeId: cardType.id,
-      cardNumber: "448/198",
-      rarity: "VMAX",
+      cardNumber: "31/198",
+      rarity: "Ultra Rare",
       language: "en",
-      imageUrl: "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=300&h=400&fit=crop",
-      prices: { cardmarket: 78.99, ebay: 85.00, tcgplayer: 81.25 }
+      imageUrl: "https://dz3we2x72f7ol.cloudfront.net/expansions/scarlet-violet/en-us/SV01_EN_31.png",
+      prices: { cardmarket: 18.99, ebay: 22.00, tcgplayer: 20.50 }
+    },
+    {
+      name: "Floragato",
+      nameIt: "Floragato",
+      description: "Grass-type Pokemon evolution",
+      descriptionIt: "Pokemon evoluzione di tipo Erba",
+      collectionId: scarletViolet.id,
+      productTypeId: cardType.id,
+      cardNumber: "8/198",
+      rarity: "Common",
+      language: "en",
+      imageUrl: "https://dz3we2x72f7ol.cloudfront.net/expansions/scarlet-violet/en-us/SV01_EN_8.png",
+      prices: { cardmarket: 2.99, ebay: 3.50, tcgplayer: 3.25 }
+    },
+    {
+      name: "Meowscarada",
+      nameIt: "Meowscarada",
+      description: "Grass/Dark-type starter evolution",
+      descriptionIt: "Evoluzione starter di tipo Erba/Buio",
+      collectionId: scarletViolet.id,
+      productTypeId: cardType.id,
+      cardNumber: "9/198",
+      rarity: "Rare",
+      language: "en",
+      imageUrl: "https://dz3we2x72f7ol.cloudfront.net/expansions/scarlet-violet/en-us/SV01_EN_9.png",
+      prices: { cardmarket: 8.99, ebay: 10.00, tcgplayer: 9.50 }
+    },
+    {
+      name: "Crocalor",
+      nameIt: "Crocalor",
+      description: "Fire-type Pokemon evolution",
+      descriptionIt: "Pokemon evoluzione di tipo Fuoco",
+      collectionId: scarletViolet.id,
+      productTypeId: cardType.id,
+      cardNumber: "26/198",
+      rarity: "Common",
+      language: "en",
+      imageUrl: "https://dz3we2x72f7ol.cloudfront.net/expansions/scarlet-violet/en-us/SV01_EN_26.png",
+      prices: { cardmarket: 3.99, ebay: 4.50, tcgplayer: 4.25 }
+    },
+    {
+      name: "Skeledirge",
+      nameIt: "Skeledirge",
+      description: "Fire/Ghost-type starter evolution",
+      descriptionIt: "Evoluzione starter di tipo Fuoco/Spettro",
+      collectionId: scarletViolet.id,
+      productTypeId: cardType.id,
+      cardNumber: "27/198",
+      rarity: "Rare",
+      language: "en",
+      imageUrl: "https://dz3we2x72f7ol.cloudfront.net/expansions/scarlet-violet/en-us/SV01_EN_27.png",
+      prices: { cardmarket: 9.99, ebay: 11.00, tcgplayer: 10.50 }
+    },
+    {
+      name: "Quaxwell",
+      nameIt: "Quaxwell",
+      description: "Water-type Pokemon evolution",
+      descriptionIt: "Pokemon evoluzione di tipo Acqua",
+      collectionId: scarletViolet.id,
+      productTypeId: cardType.id,
+      cardNumber: "53/198",
+      rarity: "Common",
+      language: "en",
+      imageUrl: "https://dz3we2x72f7ol.cloudfront.net/expansions/scarlet-violet/en-us/SV01_EN_53.png",
+      prices: { cardmarket: 2.99, ebay: 3.50, tcgplayer: 3.25 }
+    },
+    {
+      name: "Quaquaval",
+      nameIt: "Quaquaval",
+      description: "Water/Fighting-type starter evolution",
+      descriptionIt: "Evoluzione starter di tipo Acqua/Lotta",
+      collectionId: scarletViolet.id,
+      productTypeId: cardType.id,
+      cardNumber: "54/198",
+      rarity: "Rare",
+      language: "en",
+      imageUrl: "https://dz3we2x72f7ol.cloudfront.net/expansions/scarlet-violet/en-us/SV01_EN_54.png",
+      prices: { cardmarket: 8.99, ebay: 10.00, tcgplayer: 9.50 }
     }
   ];
 
-  // Create Italian cards
-  const italianCards = [
+  // Create English cards - Paldea Evolved ex cards
+  const paldeaEvolvedExCards = [
     {
-      name: "Charizard VMAX",
-      nameIt: "Charizard VMAX",
-      description: "Rare Charizard VMAX card",
-      descriptionIt: "Carta rara Charizard VMAX",
+      name: "Meowscarada ex",
+      nameIt: "Meowscarada ex",
+      description: "Grass/Dark-type starter Pokemon ex",
+      descriptionIt: "Pokemon ex starter di tipo Erba/Buio",
       collectionId: paldea.id,
       productTypeId: cardType.id,
-      cardNumber: "020/189",
-      rarity: "Rare",
-      language: "it",
-      imageUrl: "https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?w=300&h=400&fit=crop",
-      prices: { cardmarket: 75.99, ebay: 82.00, tcgplayer: 78.50 }
+      cardNumber: "15/193",
+      rarity: "Ultra Rare",
+      language: "en",
+      imageUrl: "https://dz3we2x72f7ol.cloudfront.net/expansions/paldea-evolved/en-us/SV02_EN_15.png",
+      prices: { cardmarket: 45.99, ebay: 52.00, tcgplayer: 48.75 }
     },
     {
-      name: "Pikachu V",
-      nameIt: "Pikachu V",
-      description: "Electric-type Pokemon V card",
-      descriptionIt: "Carta Pokemon V di tipo Elettro",
-      collectionId: scarletViolet.id,
+      name: "Skeledirge ex",
+      nameIt: "Skeledirge ex",
+      description: "Fire/Ghost-type starter Pokemon ex",
+      descriptionIt: "Pokemon ex starter di tipo Fuoco/Spettro",
+      collectionId: paldea.id,
       productTypeId: cardType.id,
-      cardNumber: "025/198",
+      cardNumber: "33/193",
       rarity: "Ultra Rare",
-      language: "it",
-      imageUrl: "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=300&h=400&fit=crop",
+      language: "en",
+      imageUrl: "https://dz3we2x72f7ol.cloudfront.net/expansions/paldea-evolved/en-us/SV02_EN_33.png",
+      prices: { cardmarket: 42.99, ebay: 48.00, tcgplayer: 45.50 }
+    },
+    {
+      name: "Quaquaval ex",
+      nameIt: "Quaquaval ex",
+      description: "Water/Fighting-type starter Pokemon ex",
+      descriptionIt: "Pokemon ex starter di tipo Acqua/Lotta",
+      collectionId: paldea.id,
+      productTypeId: cardType.id,
+      cardNumber: "58/193",
+      rarity: "Ultra Rare",
+      language: "en",
+      imageUrl: "https://dz3we2x72f7ol.cloudfront.net/expansions/paldea-evolved/en-us/SV02_EN_58.png",
       prices: { cardmarket: 38.99, ebay: 44.00, tcgplayer: 41.25 }
     },
     {
-      name: "Mewtwo EX",
-      nameIt: "Mewtwo EX",
-      description: "Psychic-type legendary Pokemon EX",
-      descriptionIt: "Pokemon EX leggendario di tipo Psico",
-      collectionId: scarletViolet.id,
-      productTypeId: cardType.id,
-      cardNumber: "150/198",
-      rarity: "EX",
-      language: "it",
-      imageUrl: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=300&h=400&fit=crop",
-      prices: { cardmarket: 58.50, ebay: 63.00, tcgplayer: 60.25 }
-    },
-    {
-      name: "Garchomp V",
-      nameIt: "Garchomp V",
-      description: "Dragon-type Pokemon V card",
-      descriptionIt: "Carta Pokemon V di tipo Drago",
+      name: "Forretress ex",
+      nameIt: "Forretress ex",
+      description: "Bug/Steel-type Pokemon ex",
+      descriptionIt: "Pokemon ex di tipo Coleottero/Acciaio",
       collectionId: paldea.id,
       productTypeId: cardType.id,
-      cardNumber: "445/189",
+      cardNumber: "5/193",
       rarity: "Ultra Rare",
-      language: "it",
-      imageUrl: "https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?w=300&h=400&fit=crop",
-      prices: { cardmarket: 28.99, ebay: 33.00, tcgplayer: 30.50 }
+      language: "en",
+      imageUrl: "https://dz3we2x72f7ol.cloudfront.net/expansions/paldea-evolved/en-us/SV02_EN_5.png",
+      prices: { cardmarket: 22.99, ebay: 26.00, tcgplayer: 24.50 }
     },
     {
-      name: "Lucario VMAX",
-      nameIt: "Lucario VMAX",
-      description: "Fighting-type Pokemon VMAX",
-      descriptionIt: "Pokemon VMAX di tipo Lotta",
-      collectionId: scarletViolet.id,
+      name: "Slowking ex",
+      nameIt: "Slowking ex",
+      description: "Water/Psychic-type Pokemon ex",
+      descriptionIt: "Pokemon ex di tipo Acqua/Psico",
+      collectionId: paldea.id,
       productTypeId: cardType.id,
-      cardNumber: "448/198",
-      rarity: "VMAX",
-      language: "it",
-      imageUrl: "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=300&h=400&fit=crop",
-      prices: { cardmarket: 68.99, ebay: 74.00, tcgplayer: 71.25 }
+      cardNumber: "61/193",
+      rarity: "Ultra Rare",
+      language: "en",
+      imageUrl: "https://dz3we2x72f7ol.cloudfront.net/expansions/paldea-evolved/en-us/SV02_EN_61.png",
+      prices: { cardmarket: 28.99, ebay: 32.00, tcgplayer: 30.50 }
+    },
+    {
+      name: "Chien-Pao ex",
+      nameIt: "Chien-Pao ex",
+      description: "Dark/Ice-type legendary Pokemon ex",
+      descriptionIt: "Pokemon ex leggendario di tipo Buio/Ghiaccio",
+      collectionId: paldea.id,
+      productTypeId: cardType.id,
+      cardNumber: "61/193",
+      rarity: "Ultra Rare",
+      language: "en",
+      imageUrl: "https://dz3we2x72f7ol.cloudfront.net/expansions/paldea-evolved/en-us/SV02_EN_127.png",
+      prices: { cardmarket: 67.99, ebay: 75.00, tcgplayer: 71.25 }
+    },
+    {
+      name: "Ting-Lu ex",
+      nameIt: "Ting-Lu ex",
+      description: "Dark/Ground-type legendary Pokemon ex",
+      descriptionIt: "Pokemon ex leggendario di tipo Buio/Terra",
+      collectionId: paldea.id,
+      productTypeId: cardType.id,
+      cardNumber: "103/193",
+      rarity: "Ultra Rare",
+      language: "en",
+      imageUrl: "https://dz3we2x72f7ol.cloudfront.net/expansions/paldea-evolved/en-us/SV02_EN_103.png",
+      prices: { cardmarket: 58.99, ebay: 65.00, tcgplayer: 62.25 }
+    },
+    {
+      name: "Chi-Yu ex",
+      nameIt: "Chi-Yu ex",
+      description: "Dark/Fire-type legendary Pokemon ex",
+      descriptionIt: "Pokemon ex leggendario di tipo Buio/Fuoco",
+      collectionId: paldea.id,
+      productTypeId: cardType.id,
+      cardNumber: "40/193",
+      rarity: "Ultra Rare",
+      language: "en",
+      imageUrl: "https://dz3we2x72f7ol.cloudfront.net/expansions/paldea-evolved/en-us/SV02_EN_40.png",
+      prices: { cardmarket: 78.99, ebay: 85.00, tcgplayer: 81.25 }
+    },
+    {
+      name: "Wo-Chien ex",
+      nameIt: "Wo-Chien ex",
+      description: "Dark/Grass-type legendary Pokemon ex",
+      descriptionIt: "Pokemon ex leggendario di tipo Buio/Erba",
+      collectionId: paldea.id,
+      productTypeId: cardType.id,
+      cardNumber: "20/193",
+      rarity: "Ultra Rare",
+      language: "en",
+      imageUrl: "https://dz3we2x72f7ol.cloudfront.net/expansions/paldea-evolved/en-us/SV02_EN_20.png",
+      prices: { cardmarket: 52.99, ebay: 58.00, tcgplayer: 55.50 }
+    },
+    {
+      name: "Pikachu ex",
+      nameIt: "Pikachu ex",
+      description: "Electric-type Pokemon ex",
+      descriptionIt: "Pokemon ex di tipo Elettro",
+      collectionId: paldea.id,
+      productTypeId: cardType.id,
+      cardNumber: "85/193",
+      rarity: "Ultra Rare",
+      language: "en",
+      imageUrl: "https://dz3we2x72f7ol.cloudfront.net/expansions/paldea-evolved/en-us/SV02_EN_85.png",
+      prices: { cardmarket: 89.99, ebay: 98.00, tcgplayer: 93.50 }
+    },
+    {
+      name: "Dedenne ex",
+      nameIt: "Dedenne ex",
+      description: "Electric/Fairy-type Tera Pokemon ex",
+      descriptionIt: "Pokemon ex Teracristal di tipo Elettro/Folletto",
+      collectionId: paldea.id,
+      productTypeId: cardType.id,
+      cardNumber: "86/193",
+      rarity: "Ultra Rare",
+      language: "en",
+      imageUrl: "https://dz3we2x72f7ol.cloudfront.net/expansions/paldea-evolved/en-us/SV02_EN_86.png",
+      prices: { cardmarket: 32.99, ebay: 38.00, tcgplayer: 35.50 }
     }
   ];
+
+  // Combine all English cards
+  const englishCards = [...scarletVioletExCards, ...paldeaEvolvedExCards];
+
+  // Create Italian versions of all the cards (same images, but with Italian pricing)
+  const italianCards = englishCards.map(card => ({
+    ...card,
+    language: "it",
+    prices: {
+      cardmarket: card.prices.cardmarket * 0.85, // Generally 15% cheaper in Italian market
+      ebay: card.prices.ebay * 0.88,
+      tcgplayer: card.prices.tcgplayer * 0.87
+    }
+  }));
 
   // Insert cards
   await db.insert(products).values(englishCards);
@@ -207,7 +364,7 @@ async function seedDatabase() {
       cardNumber: null,
       rarity: null,
       language: "en",
-      imageUrl: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=300&h=400&fit=crop",
+      imageUrl: "https://dz3we2x72f7ol.cloudfront.net/expansions/paldea-evolved/en-us/SV02_EN_127.png",
       prices: { cardmarket: 3.99, ebay: 4.50, tcgplayer: 4.25 }
     },
     {
@@ -220,7 +377,7 @@ async function seedDatabase() {
       cardNumber: null,
       rarity: null,
       language: "en",
-      imageUrl: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=300&h=400&fit=crop",
+      imageUrl: "https://dz3we2x72f7ol.cloudfront.net/expansions/scarlet-violet/en-us/SV01_EN_125.png",
       prices: { cardmarket: 4.25, ebay: 4.75, tcgplayer: 4.50 }
     },
     {
@@ -233,7 +390,7 @@ async function seedDatabase() {
       cardNumber: null,
       rarity: null,
       language: "en",
-      imageUrl: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=300&h=400&fit=crop",
+      imageUrl: "https://dz3we2x72f7ol.cloudfront.net/expansions/paldea-evolved/en-us/SV02_EN_61.png",
       prices: { cardmarket: 39.99, ebay: 45.00, tcgplayer: 42.50 }
     }
   ];
@@ -249,7 +406,7 @@ async function seedDatabase() {
       author: "PokeHunter Team",
       category: "Featured",
       language: "en",
-      imageUrl: "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=800&h=400&fit=crop",
+      imageUrl: "https://dz3we2x72f7ol.cloudfront.net/expansions/paldea-evolved/en-us/SV02_EN_127.png",
       featured: true,
       publishedAt: new Date()
     },
@@ -260,7 +417,7 @@ async function seedDatabase() {
       author: "PokeHunter Team",
       category: "Strategy",
       language: "en",
-      imageUrl: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=200&fit=crop",
+      imageUrl: "https://dz3we2x72f7ol.cloudfront.net/expansions/scarlet-violet/en-us/SV01_EN_81.png",
       featured: false,
       publishedAt: new Date()
     }
