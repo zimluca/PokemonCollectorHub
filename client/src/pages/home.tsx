@@ -22,11 +22,11 @@ export default function Home() {
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-pokemon-blue via-pokemon-purple to-pokemon-blue text-white py-20">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-5xl font-bold mb-6">{t('heroTitle')}</h2>
-          <p className="text-xl mb-8 max-w-2xl mx-auto">{t('heroSubtitle')}</p>
+          <h2 className="text-6xl font-bold mb-6 drop-shadow-lg">{t('heroTitle')}</h2>
+          <p className="text-xl mb-8 max-w-2xl mx-auto text-blue-100 leading-relaxed">{t('heroSubtitle')}</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/database">
-              <Button className="bg-pokemon-yellow text-gray-900 hover:bg-yellow-300 px-8 py-3 text-lg">
+              <Button className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 hover:from-yellow-500 hover:to-yellow-600 px-8 py-3 text-lg font-semibold shadow-lg hover:shadow-xl transition-all transform hover:scale-105">
                 <Search className="h-5 w-5 mr-2" />
                 {t('exploreDatabase')}
               </Button>
@@ -34,7 +34,7 @@ export default function Home() {
             <Link href="/collection">
               <Button
                 variant="outline"
-                className="border-white text-white hover:bg-white hover:text-pokemon-blue px-8 py-3 text-lg"
+                className="border-2 border-white text-white hover:bg-white hover:text-blue-600 px-8 py-3 text-lg font-semibold shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
               >
                 <Plus className="h-5 w-5 mr-2" />
                 {t('startCollection')}
@@ -45,24 +45,24 @@ export default function Home() {
       </section>
 
       {/* Quick Stats */}
-      <section className="py-16 bg-white">
+      <section className="py-16 bg-gradient-to-r from-blue-50 to-purple-50">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-pokemon-blue mb-2">15,000+</div>
-              <div className="text-gray-600">{t('pokemonCards')}</div>
+            <div className="text-center pokemon-stats-card">
+              <div className="text-4xl font-bold text-pokemon-blue mb-2">15,000+</div>
+              <div className="text-gray-600 font-medium">{t('pokemonCards')}</div>
             </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-pokemon-red mb-2">150+</div>
-              <div className="text-gray-600">{t('setsExpansions')}</div>
+            <div className="text-center pokemon-stats-card">
+              <div className="text-4xl font-bold text-pokemon-red mb-2">150+</div>
+              <div className="text-gray-600 font-medium">{t('setsExpansions')}</div>
             </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-pokemon-green mb-2">25,000+</div>
-              <div className="text-gray-600">{t('activeCollectors')}</div>
+            <div className="text-center pokemon-stats-card">
+              <div className="text-4xl font-bold text-pokemon-green mb-2">25,000+</div>
+              <div className="text-gray-600 font-medium">{t('activeCollectors')}</div>
             </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-pokemon-purple mb-2">5</div>
-              <div className="text-gray-600">{t('supportedLanguages')}</div>
+            <div className="text-center pokemon-stats-card">
+              <div className="text-4xl font-bold text-pokemon-purple mb-2">5</div>
+              <div className="text-gray-600 font-medium">{t('supportedLanguages')}</div>
             </div>
           </div>
         </div>
@@ -72,7 +72,7 @@ export default function Home() {
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center mb-12">
-            <h2 className="text-4xl font-bold text-gray-900">{t('latestNews')}</h2>
+            <h2 className="text-4xl font-bold pokemon-gradient bg-clip-text text-transparent">{t('latestNews')}</h2>
             <Link href="/news">
               <Button variant="ghost" className="text-pokemon-blue hover:text-blue-600">
                 {t('viewAllNews')}
@@ -98,7 +98,7 @@ export default function Home() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {/* Featured Article */}
               {featuredArticles.length > 0 && (
-                <Card className="lg:col-span-2 hover:shadow-xl transition-shadow">
+                <Card className="lg:col-span-2 pokemon-card">
                   <img
                     src={featuredArticles[0].imageUrl || 'https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=800&h=400&fit=crop'}
                     alt={featuredArticles[0].title}
@@ -136,7 +136,7 @@ export default function Home() {
               {/* Regular Articles */}
               <div className="space-y-6">
                 {regularArticles.slice(0, 2).map((article) => (
-                  <Card key={article.id} className="hover:shadow-xl transition-shadow">
+                  <Card key={article.id} className="pokemon-card">
                     <img
                       src={article.imageUrl || 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=200&fit=crop'}
                       alt={article.title}

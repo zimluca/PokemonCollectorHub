@@ -143,19 +143,19 @@ export default function Database() {
 
           {/* Quick Filter Tags */}
           <div className="flex flex-wrap gap-2">
-            <Button className="bg-pokemon-blue text-white hover:bg-blue-600">
+            <Button className="pokemon-button">
               <Flame className="h-4 w-4 mr-2" />
               {t('popular')}
             </Button>
-            <Button variant="outline" className="hover:bg-gray-100">
+            <Button variant="outline" className="hover:bg-yellow-50 hover:text-yellow-600 hover:border-yellow-300">
               <Star className="h-4 w-4 mr-2" />
               {t('rareCards')}
             </Button>
-            <Button variant="outline" className="hover:bg-gray-100">
+            <Button variant="outline" className="hover:bg-green-50 hover:text-green-600 hover:border-green-300">
               <TrendingUp className="h-4 w-4 mr-2" />
               {t('priceTrending')}
             </Button>
-            <Button variant="outline" className="hover:bg-gray-100">
+            <Button variant="outline" className="hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300">
               <Clock className="h-4 w-4 mr-2" />
               {t('recentlyAdded')}
             </Button>
@@ -179,7 +179,7 @@ export default function Database() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
             {products.map((product) => (
-              <Card key={product.id} className="hover:shadow-xl transition-all duration-300 hover:scale-105">
+              <Card key={product.id} className="pokemon-card">
                 <img
                   src={product.imageUrl || 'https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?w=300&h=400&fit=crop'}
                   alt={product.name}
@@ -187,17 +187,17 @@ export default function Database() {
                 />
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <Badge className={getRarityColor(product.rarity || 'common')}>
+                    <Badge className={`${getRarityColor(product.rarity || 'common')} text-white font-semibold`}>
                       {product.rarity || 'Common'}
                     </Badge>
                     <div className="flex items-center">
                       <Languages className="h-3 w-3 text-gray-400 mr-1" />
-                      <span className="text-xs text-gray-600 uppercase">
+                      <span className="text-xs text-gray-600 uppercase font-medium">
                         {product.language}
                       </span>
                     </div>
                   </div>
-                  <h3 className="font-bold text-sm mb-1">{product.name}</h3>
+                  <h3 className="font-bold text-sm mb-1 text-gray-900">{product.name}</h3>
                   <p className="text-xs text-gray-600 mb-3">
                     {product.cardNumber || 'Product'}
                   </p>
@@ -206,14 +206,14 @@ export default function Database() {
                   <div className="mb-3">
                     <div className="text-xs text-gray-500 mb-1">{t('minPrice')}:</div>
                     <div className="flex items-center justify-between">
-                      <span className="text-pokemon-green font-bold">
+                      <span className="text-green-600 font-bold text-lg">
                         {formatPrice(product.prices)}
                       </span>
                       <div className="flex space-x-1">
                         {getPriceProviders(product.prices).map((provider) => (
                           <span
                             key={provider}
-                            className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded"
+                            className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full font-medium"
                           >
                             {provider.substring(0, 3).toUpperCase()}
                           </span>
@@ -224,11 +224,11 @@ export default function Database() {
 
                   {/* Action Buttons */}
                   <div className="flex gap-2">
-                    <Button className="flex-1 bg-pokemon-blue hover:bg-blue-600 text-xs">
+                    <Button className="flex-1 pokemon-button text-xs">
                       <Plus className="h-3 w-3 mr-1" />
                       {t('add')}
                     </Button>
-                    <Button variant="outline" className="text-xs">
+                    <Button variant="outline" className="text-xs hover:bg-red-50 hover:text-red-600 hover:border-red-300">
                       <Heart className="h-3 w-3" />
                     </Button>
                   </div>

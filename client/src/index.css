@@ -3,33 +3,35 @@
 @tailwind utilities;
 
 :root {
-  --background: hsl(0, 0%, 100%);
-  --foreground: hsl(20, 14.3%, 4.1%);
-  --muted: hsl(60, 4.8%, 95.9%);
-  --muted-foreground: hsl(25, 5.3%, 44.7%);
-  --popover: hsl(0, 0%, 100%);
-  --popover-foreground: hsl(20, 14.3%, 4.1%);
-  --card: hsl(0, 0%, 100%);
-  --card-foreground: hsl(20, 14.3%, 4.1%);
-  --border: hsl(20, 5.9%, 90%);
-  --input: hsl(20, 5.9%, 90%);
-  --primary: hsl(207, 90%, 54%);
-  --primary-foreground: hsl(211, 100%, 99%);
-  --secondary: hsl(60, 4.8%, 95.9%);
-  --secondary-foreground: hsl(24, 9.8%, 10%);
-  --accent: hsl(60, 4.8%, 95.9%);
-  --accent-foreground: hsl(24, 9.8%, 10%);
-  --destructive: hsl(0, 84.2%, 60.2%);
-  --destructive-foreground: hsl(60, 9.1%, 97.8%);
-  --ring: hsl(20, 14.3%, 4.1%);
-  --radius: 0.5rem;
-
   /* Pokemon theme colors */
   --pokemon-blue: hsl(215, 89%, 60%);
   --pokemon-yellow: hsl(50, 93%, 64%);
   --pokemon-red: hsl(0, 74%, 57%);
   --pokemon-purple: hsl(262, 69%, 66%);
   --pokemon-green: hsl(154, 85%, 44%);
+  --pokemon-orange: hsl(25, 95%, 53%);
+  
+  /* Updated theme with Pokemon colors */
+  --background: hsl(210, 100%, 97%);
+  --foreground: hsl(20, 14.3%, 4.1%);
+  --muted: hsl(210, 40%, 96%);
+  --muted-foreground: hsl(25, 5.3%, 44.7%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(20, 14.3%, 4.1%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(20, 14.3%, 4.1%);
+  --border: hsl(215, 20%, 85%);
+  --input: hsl(215, 20%, 85%);
+  --primary: var(--pokemon-red);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: var(--pokemon-blue);
+  --secondary-foreground: hsl(0, 0%, 100%);
+  --accent: var(--pokemon-yellow);
+  --accent-foreground: hsl(20, 14.3%, 4.1%);
+  --destructive: hsl(0, 84.2%, 60.2%);
+  --destructive-foreground: hsl(60, 9.1%, 97.8%);
+  --ring: var(--pokemon-blue);
+  --radius: 0.75rem;
 }
 
 .dark {
@@ -61,7 +63,7 @@
   }
 
   body {
-    @apply font-sans antialiased bg-background text-foreground;
+    @apply font-sans antialiased bg-gradient-to-br from-blue-50 via-white to-yellow-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 text-foreground;
   }
 }
 
@@ -112,5 +114,25 @@
   
   .hover\:text-pokemon-blue:hover {
     color: var(--pokemon-blue);
+  }
+  
+  .pokemon-card {
+    @apply bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-blue-300 dark:hover:border-blue-500 transform hover:scale-105;
+  }
+  
+  .pokemon-gradient {
+    @apply bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500;
+  }
+  
+  .pokemon-button {
+    @apply bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold py-2 px-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105;
+  }
+  
+  .pokemon-header {
+    @apply bg-gradient-to-r from-red-600 via-yellow-500 to-blue-600 text-white shadow-lg;
+  }
+  
+  .pokemon-stats-card {
+    @apply bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 p-6 border border-gray-100 dark:border-gray-700;
   }
 }
