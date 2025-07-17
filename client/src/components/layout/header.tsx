@@ -26,7 +26,7 @@ export function Header() {
             <div className="w-10 h-10 bg-gradient-to-r from-pokemon-blue to-pokemon-purple rounded-full flex items-center justify-center">
               <Zap className="text-white text-lg" />
             </div>
-            <h1 className="text-2xl font-bold text-pokemon-blue">PokeCollector</h1>
+            <h1 className="text-2xl font-bold text-pokemon-blue">PokeHunter</h1>
           </Link>
 
           {/* Navigation */}

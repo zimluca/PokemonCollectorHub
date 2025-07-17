@@ -143,12 +143,9 @@ export class MemStorage implements IStorage {
     // Initialize sample articles
     this.createArticle({
       title: "Paldea Evolved: Complete Set Review & Investment Guide",
-      titleIt: "Paldea Evolved: Recensione Completa e Guida agli Investimenti",
       content: "Discover the most valuable cards from the latest expansion and learn which ones are worth adding to your collection.",
-      contentIt: "Scopri le carte più preziose dell'ultima espansione e impara quali vale la pena aggiungere alla tua collezione.",
       excerpt: "Complete guide to Paldea Evolved set with investment tips",
-      excerptIt: "Guida completa al set Paldea Evolved con consigli di investimento",
-      author: "PokeCollector Team",
+      author: "PokeHunter Team",
       category: "Featured",
       language: "en",
       imageUrl: "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=800&h=400&fit=crop",
@@ -157,12 +154,9 @@ export class MemStorage implements IStorage {
 
     this.createArticle({
       title: "Pack Opening Strategy: Maximizing Your Pulls",
-      titleIt: "Strategia di Apertura Buste: Massimizzare i Tuoi Risultati",
       content: "Learn the best techniques and timing for opening booster packs to get the most value.",
-      contentIt: "Impara le migliori tecniche e tempistiche per aprire le buste e ottenere il massimo valore.",
       excerpt: "Best practices for booster pack opening",
-      excerptIt: "Migliori pratiche per l'apertura delle buste",
-      author: "PokeCollector Team",
+      author: "PokeHunter Team",
       category: "Strategy",
       language: "en",
       imageUrl: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=200&fit=crop",

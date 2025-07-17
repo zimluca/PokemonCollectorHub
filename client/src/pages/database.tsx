@@ -12,16 +12,16 @@ import type { Product, Collection, ProductType } from '@shared/schema';
 export default function Database() {
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCollection, setSelectedCollection] = useState<string>('');
-  const [selectedType, setSelectedType] = useState<string>('');
-  const [selectedLanguage, setSelectedLanguage] = useState<string>('');
+  const [selectedCollection, setSelectedCollection] = useState<string>('all');
+  const [selectedType, setSelectedType] = useState<string>('all');
+  const [selectedLanguage, setSelectedLanguage] = useState<string>('all');
 
   const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
     queryKey: ['/api/products', {
       search: searchTerm,
-      collectionId: selectedCollection,
-      productTypeId: selectedType,
-      language: selectedLanguage,
+      collectionId: selectedCollection === 'all' ? undefined : selectedCollection,
+      productTypeId: selectedType === 'all' ? undefined : selectedType,
+      language: selectedLanguage === 'all' ? undefined : selectedLanguage,
     }],
   });
 
@@ -88,7 +88,7 @@ export default function Database() {
                   <SelectValue placeholder={t('allSets')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">{t('allSets')}</SelectItem>
+                  <SelectItem value="all">{t('allSets')}</SelectItem>
                   {collections.map((collection) => (
                     <SelectItem key={collection.id} value={collection.id.toString()}>
                       {collection.name}
@@ -102,7 +102,7 @@ export default function Database() {
                   <SelectValue placeholder={t('allLanguages')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">{t('allLanguages')}</SelectItem>
+                  <SelectItem value="all">{t('allLanguages')}</SelectItem>
                   <SelectItem value="en">English</SelectItem>
                   <SelectItem value="it">Italian</SelectItem>
                   <SelectItem value="jp">Japanese</SelectItem>
@@ -115,7 +115,7 @@ export default function Database() {
                   <SelectValue placeholder={t('allTypes')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">{t('allTypes')}</SelectItem>
+                  <SelectItem value="all">{t('allTypes')}</SelectItem>
                   {productTypes.map((type) => (
                     <SelectItem key={type.id} value={type.id.toString()}>
                       {type.name}

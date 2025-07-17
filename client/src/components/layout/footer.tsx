@@ -16,10 +16,10 @@ export function Footer() {
               <div className="w-10 h-10 bg-gradient-to-r from-pokemon-blue to-pokemon-purple rounded-full flex items-center justify-center">
                 <Zap className="text-white text-lg" />
               </div>
-              <h3 className="text-2xl font-bold">PokeCollector</h3>
+              <h3 className="text-2xl font-bold">PokeHunter</h3>
             </div>
             <p className="text-gray-400 mb-4">
-              The ultimate platform for Pokemon card collectors worldwide.
+              The ultimate platform for Pokemon card hunters worldwide.
             </p>
             <div className="flex space-x-4">
               <a href="#" className="text-gray-400 hover:text-pokemon-blue">
@@ -107,7 +107,7 @@ export function Footer() {
 
         <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
           <p>
-            &copy; 2024 PokeCollector. All rights reserved. |{' '}
+            &copy; 2024 PokeHunter. All rights reserved. |{' '}
             <a href="#" className="hover:text-white">
               {t('privacyPolicy')}
             </a>{' '}

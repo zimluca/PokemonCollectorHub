@@ -1,4 +1,4 @@
-# Pokemon Card Collection Hub
+# PokeHunter - Pokemon Card Collection Hub
 
 ## Overview
 
