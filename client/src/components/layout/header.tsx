@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { LanguageSelector } from '@/components/ui/language-selector';
-import { User, Menu, LogOut, Settings } from 'lucide-react';
+import { User, Menu, LogOut, Settings, Zap } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 export function Header() {
