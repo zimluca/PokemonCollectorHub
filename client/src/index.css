@@ -135,4 +135,20 @@
   .pokemon-stats-card {
     @apply bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 p-6 border border-gray-100 dark:border-gray-700;
   }
+  
+  /* Pokemon-themed animations */
+  @keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    33% { transform: translateY(-10px) rotate(1deg); }
+    66% { transform: translateY(5px) rotate(-1deg); }
+  }
+  
+  .pokemon-float {
+    animation: float 4s ease-in-out infinite;
+  }
+  
+  .pokemon-float-delay {
+    animation: float 4s ease-in-out infinite;
+    animation-delay: 1s;
+  }
 }

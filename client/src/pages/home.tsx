@@ -20,9 +20,27 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-pokemon-blue via-pokemon-purple to-pokemon-blue text-white py-20">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-6xl font-bold mb-6 drop-shadow-lg">{t('heroTitle')}</h2>
+      <section className="relative bg-gradient-to-r from-pokemon-blue via-pokemon-purple to-pokemon-blue text-white py-20 overflow-hidden">
+        {/* Pokemon-themed background elements */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-10 left-10 w-32 h-32 rounded-full bg-pokemon-yellow animate-pulse"></div>
+          <div className="absolute top-20 right-20 w-24 h-24 rounded-full bg-pokemon-red animate-bounce"></div>
+          <div className="absolute bottom-20 left-1/4 w-20 h-20 rounded-full bg-pokemon-green animate-pulse"></div>
+          <div className="absolute bottom-10 right-1/3 w-28 h-28 rounded-full bg-pokemon-orange animate-bounce"></div>
+          <div className="absolute top-1/3 left-1/2 w-16 h-16 rounded-full bg-white animate-pulse"></div>
+          
+          {/* Pokeball-like shapes */}
+          <div className="absolute top-16 right-1/4 w-12 h-12 border-4 border-white rounded-full"></div>
+          <div className="absolute bottom-32 left-20 w-8 h-8 border-2 border-pokemon-yellow rounded-full"></div>
+          <div className="absolute top-1/2 right-16 w-10 h-10 border-3 border-pokemon-red rounded-full"></div>
+        </div>
+        
+        <div className="container mx-auto px-4 text-center relative z-10">
+          <h2 className="text-6xl font-bold mb-6 drop-shadow-lg relative">
+            {t('heroTitle')}
+            <div className="absolute -top-4 -right-4 w-8 h-8 bg-pokemon-yellow rounded-full animate-ping opacity-75"></div>
+            <div className="absolute -bottom-2 -left-6 w-6 h-6 bg-pokemon-red rounded-full animate-pulse"></div>
+          </h2>
           <p className="text-xl mb-8 max-w-2xl mx-auto text-blue-100 leading-relaxed">{t('heroSubtitle')}</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/database">
