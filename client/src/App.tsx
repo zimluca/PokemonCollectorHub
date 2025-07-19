@@ -11,6 +11,7 @@ import Home from '@/pages/home';
 import News from '@/pages/news';
 import Database from '@/pages/database';
 import Collection from '@/pages/collection';
+import Login from '@/pages/login';
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -20,6 +21,7 @@ function Router() {
       <Route path="/news" component={News} />
       <Route path="/database" component={Database} />
       <Route path="/collection" component={Collection} />
+      <Route path="/login" component={Login} />
       <Route component={NotFound} />
     </Switch>
   );

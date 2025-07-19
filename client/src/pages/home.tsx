@@ -41,7 +41,7 @@ export default function Home() {
             <div className="absolute -top-4 -right-4 w-8 h-8 bg-pokemon-yellow rounded-full animate-ping opacity-75"></div>
             <div className="absolute -bottom-2 -left-6 w-6 h-6 bg-pokemon-red rounded-full animate-pulse"></div>
           </h2>
-          <p className="text-xl mb-8 max-w-2xl mx-auto text-blue-100 leading-relaxed">{t('heroSubtitle')}</p>
+          <p className="text-xl mb-8 max-w-2xl mx-auto text-white drop-shadow-lg leading-relaxed">{t('heroSubtitle')}</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/database">
               <Button className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 hover:from-yellow-500 hover:to-yellow-600 px-8 py-3 text-lg font-semibold shadow-lg hover:shadow-xl transition-all transform hover:scale-105">
@@ -52,7 +52,7 @@ export default function Home() {
             <Link href="/collection">
               <Button
                 variant="outline"
-                className="border-2 border-white text-white hover:bg-white hover:text-blue-600 px-8 py-3 text-lg font-semibold shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
+                className="border-2 border-white bg-white/10 backdrop-blur-sm text-white hover:bg-white hover:text-blue-600 px-8 py-3 text-lg font-semibold shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
               >
                 <Plus className="h-5 w-5 mr-2" />
                 {t('startCollection')}

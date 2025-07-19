@@ -3,12 +3,17 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import CardForm from './card-form'; // Assuming CardForm is in a separate file
 
 export default function Collection() {
   const { t } = useTranslation();
+  const [editingCard, setEditingCard] = useState(null);
 
   const collectionData = [
     {
+      id: '1',
       name: 'Paldea Evolved',
       completion: 89,
       total: 207,
@@ -18,6 +23,7 @@ export default function Collection() {
       color: 'bg-pokemon-green',
     },
     {
+      id: '2',
       name: 'Scarlet & Violet',
       completion: 67,
       total: 198,
@@ -27,6 +33,7 @@ export default function Collection() {
       color: 'bg-pokemon-yellow',
     },
     {
+      id: '3',
       name: 'Lost Origin',
       completion: 45,
       total: 196,
@@ -36,6 +43,12 @@ export default function Collection() {
       color: 'bg-pokemon-red',
     },
   ];
+
+  const updateCard = (id, data) => {
+    // Implement your update logic here, e.g., make an API call
+    console.log(`Updating card with id ${id} with data:`, data);
+    setEditingCard(null); // Close the dialog after update
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 py-16">
@@ -90,6 +103,7 @@ export default function Collection() {
                       <span className="text-pokemon-green font-semibold">
                         {collection.completion}% {t('complete')}
                       </span>
+                      <Button onClick={() => setEditingCard(collection)}>Edit</Button>
                     </div>
                     <Progress value={collection.completion} className="mb-4" />
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
@@ -134,6 +148,22 @@ export default function Collection() {
             </TabsContent>
           </Tabs>
         </Card>
+
+        {/* Dialog per modifica carta */}
+        {editingCard && (
+          <Dialog open={!!editingCard} onOpenChange={() => setEditingCard(null)}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Modifica carta</DialogTitle>
+              </DialogHeader>
+              <CardForm 
+                initialData={editingCard}
+                onSubmit={(data) => updateCard(editingCard.id, data)}
+                onCancel={() => setEditingCard(null)}
+              />
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
     </div>
   );
