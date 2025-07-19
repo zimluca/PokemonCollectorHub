@@ -5,7 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import CardForm from './card-form'; // Assuming CardForm is in a separate file
+import { CardForm } from '@/components/ui/card-form';
 
 export default function Collection() {
   const { t } = useTranslation();

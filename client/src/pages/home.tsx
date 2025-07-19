@@ -36,7 +36,7 @@ export default function Home() {
         </div>
         
         <div className="container mx-auto px-4 text-center relative z-10">
-          <h2 className="text-6xl font-bold mb-6 drop-shadow-lg relative">
+          <h2 className="text-6xl font-bold mb-6 drop-shadow-2xl relative text-white">
             {t('heroTitle')}
             <div className="absolute -top-4 -right-4 w-8 h-8 bg-pokemon-yellow rounded-full animate-ping opacity-75"></div>
             <div className="absolute -bottom-2 -left-6 w-6 h-6 bg-pokemon-red rounded-full animate-pulse"></div>
