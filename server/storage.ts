@@ -6,7 +6,7 @@ import {
   type LoginData, type RegisterData
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, like, or, desc, ilike, isNotNull } from "drizzle-orm";
+import { eq, and, like, or, desc, ilike, isNotNull, sql } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { pokemonAPI, type PokemonTCGCard } from "./pokemon-api";
 
@@ -254,8 +254,8 @@ export class DatabaseStorage implements IStorage {
       query = query.where(and(...whereConditions));
     }
 
-    // Order by cardNumber (collection number) ascending
-    return query.orderBy(products.cardNumber);
+    // Order by cardNumber (collection number) ascending - cast to integer for proper numeric sort
+    return query.orderBy(sql`CAST(NULLIF(REGEXP_REPLACE(${products.cardNumber}, '[^0-9]', '', 'g'), '') AS INTEGER) ASC NULLS LAST`);
   }
 
   async getProduct(id: number): Promise<Product | undefined> {

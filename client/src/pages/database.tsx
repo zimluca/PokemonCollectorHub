@@ -143,8 +143,23 @@ export default function Database() {
               <p className="text-gray-600 text-lg">{t('selectExpansionDescription')}</p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {collections.map((collection) => (
+            {/* Group collections by year */}
+            {Object.entries(
+              collections.reduce((acc, collection) => {
+                const year = collection.releaseDate ? new Date(collection.releaseDate).getFullYear() : 'Unknown';
+                if (!acc[year]) acc[year] = [];
+                acc[year].push(collection);
+                return acc;
+              }, {} as Record<string | number, Collection[]>)
+            )
+            .sort(([yearA], [yearB]) => (yearB === 'Unknown' ? -1 : yearA === 'Unknown' ? 1 : Number(yearB) - Number(yearA)))
+            .map(([year, yearCollections]) => (
+              <div key={year} className="mb-12">
+                <h3 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+                  {year === 'Unknown' ? 'Anno Sconosciuto' : year}
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {yearCollections.map((collection) => (
                 <Card 
                   key={collection.id} 
                   className="pokemon-card cursor-pointer"
@@ -162,8 +177,10 @@ export default function Database() {
                     </p>
                   </CardContent>
                 </Card>
-              ))}
-            </div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
