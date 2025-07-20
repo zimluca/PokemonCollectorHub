@@ -135,6 +135,10 @@ export class DatabaseStorage implements IStorage {
       ]);
 
       console.log('Database initialization completed');
+
+      // Sync Pokemon cards after initializing other data
+      await this.syncPokemonCards();
+
     } catch (error) {
       console.error('Error initializing database:', error);
     }
@@ -299,7 +303,7 @@ export class DatabaseStorage implements IStorage {
   async syncPokemonCards(): Promise<void> {
     try {
       console.log('Starting Pokemon cards synchronization...');
-      
+
       // For now, create sample Pokemon cards data to simulate API integration
       // In production, this would use the real Pokemon TCG API
       const sampleCards = [
@@ -334,14 +338,14 @@ export class DatabaseStorage implements IStorage {
           types: ['Lightning']
         }
       ];
-      
+
       const cards = sampleCards;
       console.log(`Retrieved ${cards.length} sample cards for demonstration`);
 
       // Get existing collections and product types
       const allCollections = await this.getCollections();
       const allProductTypes = await this.getProductTypes();
-      
+
       const cardProductType = allProductTypes.find(pt => pt.name === "Single Cards");
       if (!cardProductType) {
         throw new Error("Single Cards product type not found");

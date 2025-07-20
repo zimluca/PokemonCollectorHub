@@ -46,9 +46,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log('Starting Pokemon cards synchronization...');
       await storage.syncPokemonCards();
+      
+      // Get count of synced products
+      const products = await storage.getProducts();
+      
       res.json({ 
         message: "Pokemon cards synchronized successfully",
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        totalCards: products.length
       });
     } catch (error) {
       console.error('Pokemon sync error:', error);
