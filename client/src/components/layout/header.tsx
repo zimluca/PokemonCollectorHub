@@ -11,22 +11,8 @@ export function Header() {
   const [location] = useLocation();
   const { user, isAuthenticated, isLoading } = useAuth();
 
-  const handleLogin = async () => {
-    try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-      });
-      
-      if (response.ok) {
-        window.location.reload();
-      }
-    } catch (error) {
-      console.error('Login failed:', error);
-    }
+  const handleLogin = () => {
+    window.location.href = '/login';
   };
 
   const handleLogout = async () => {

@@ -287,27 +287,26 @@ export class DatabaseStorage implements IStorage {
 
   async syncPokemonCards(): Promise<void> {
     try {
-      console.log('Starting comprehensive Pokemon cards synchronization...');
-      console.log('This will fetch ALL Pokemon cards from the TCG API...');
+      console.log('Starting automatic Pokemon cards synchronization from ALL sets...');
 
-      // Check if we already have cards to avoid duplicate work
-      const existingCards = await db.select().from(products).where(isNotNull(products.tcgId)).limit(1);
-      if (existingCards.length > 0) {
-        console.log('Cards already exist in database. Use manual sync to update or add new cards.');
+      // Check if we already have a substantial number of cards
+      const existingCards = await db.select().from(products).where(isNotNull(products.tcgId));
+      if (existingCards.length > 1000) {
+        console.log(`Database already contains ${existingCards.length} Pokemon cards. Skipping initial sync.`);
         return;
       }
 
-      // Fetch ALL cards from the Pokemon TCG API
+      console.log('Fetching ALL Pokemon cards from ALL sets and expansions...');
+
+      // Fetch ALL cards from the Pokemon TCG API using the comprehensive method
       let allCards: any[] = [];
       
       try {
-        // Use the comprehensive method to get all cards from all sets
         allCards = await pokemonAPI.getAllCardsFromAllSets();
         console.log(`Successfully fetched ${allCards.length} total cards from API`);
       } catch (error) {
         console.error('Error fetching from sets, trying direct API fetch:', error);
         try {
-          // Fallback to direct API pagination
           allCards = await pokemonAPI.getAllCards();
           console.log(`Fallback fetch successful: ${allCards.length} cards`);
         } catch (fallbackError) {
@@ -324,14 +323,23 @@ export class DatabaseStorage implements IStorage {
 
       // Get existing collections and product types
       const allCollections = await this.getCollections();
-      const allProductTypes = await this.getProductTypes();
+      let allProductTypes = await this.getProductTypes();
 
-      const cardProductType = allProductTypes.find(pt => pt.name === "Single Cards");
-      if (!cardProductType) {
-        throw new Error("Single Cards product type not found");
+      // Find or create "Carte Singole" product type
+      let carteSingoleType = allProductTypes.find(pt => pt.nameIt === "Carte Singole" || pt.name === "Single Cards");
+      if (!carteSingoleType) {
+        console.log('Creating "Carte Singole" product type...');
+        carteSingoleType = await this.createProductType({
+          name: "Single Cards",
+          nameIt: "Carte Singole",
+          description: "Individual Pokemon cards",
+          descriptionIt: "Carte Pokemon individuali"
+        });
+        allProductTypes.push(carteSingoleType);
       }
 
       let processedCount = 0;
+      let createdCollections = 0;
 
       // Process cards in batches
       for (const card of allCards) {
@@ -339,29 +347,31 @@ export class DatabaseStorage implements IStorage {
           // Find or create collection for this set
           let collection = allCollections.find(c => c.name === card.set.name);
           if (!collection) {
+            console.log(`Creating new collection: ${card.set.name}`);
             collection = await this.createCollection({
               name: card.set.name,
               nameIt: card.set.name,
               description: `Pokemon TCG set: ${card.set.name}`,
               descriptionIt: `Set Pokemon TCG: ${card.set.name}`,
-              imageUrl: null,
-              releaseDate: null
+              imageUrl: card.set.images?.logo || null,
+              releaseDate: card.set.releaseDate ? new Date(card.set.releaseDate) : null
             });
             allCollections.push(collection);
+            createdCollections++;
           }
 
-          // Prepare product data
-          const productData = {
+          // Prepare card data for "Carte Singole"
+          const cardData = {
             tcgId: card.id,
             name: card.name,
-            nameIt: card.name, // Could be localized later
+            nameIt: card.name,
             description: card.flavorText || `${card.name} Pokemon card`,
             descriptionIt: card.flavorText || `Carta Pokemon ${card.name}`,
             collectionId: collection.id,
-            productTypeId: cardProductType.id,
+            productTypeId: carteSingoleType.id,  // Always use "Carte Singole"
             cardNumber: card.number,
             rarity: card.rarity,
-            language: "en", // Default to English
+            language: "en",
             imageUrl: card.images?.small || null,
             imageUrlLarge: card.images?.large || null,
             setName: card.set.name,
@@ -372,20 +382,20 @@ export class DatabaseStorage implements IStorage {
             prices: this.extractPrices(card),
           };
 
-          await this.upsertProduct(productData);
+          await this.upsertProduct(cardData);
           processedCount++;
 
-          if (processedCount % 100 === 0) {
-            console.log(`Processed ${processedCount} cards...`);
+          if (processedCount % 500 === 0) {
+            console.log(`Progress: ${processedCount}/${allCards.length} cards processed...`);
           }
         } catch (error) {
           console.error(`Error processing card ${card.id}:`, error);
         }
       }
 
-      console.log(`Successfully synchronized ${processedCount} Pokemon cards`);
+      console.log(`Automatic sync completed! Processed ${processedCount} Pokemon cards from ${createdCollections} new collections`);
     } catch (error) {
-      console.error('Error in Pokemon cards synchronization:', error);
+      console.error('Error in automatic Pokemon cards synchronization:', error);
       throw error;
     }
   }
