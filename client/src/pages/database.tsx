@@ -6,14 +6,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Plus, Heart, Languages, Flame, Star, TrendingUp, Clock, RefreshCw, Download } from 'lucide-react';
-import { apiRequest, queryClient } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
+import { Search, Plus, Heart, Languages, Flame, Star, TrendingUp, Clock } from 'lucide-react';
+import { queryClient } from '@/lib/queryClient';
 import type { Product, Collection, ProductType } from '@shared/schema';
 
 export default function Database() {
   const { t, i18n } = useTranslation();
-  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCollection, setSelectedCollection] = useState<string>('');
   const [selectedType, setSelectedType] = useState<string>('');
@@ -24,46 +22,18 @@ export default function Database() {
   useEffect(() => {
     const checkAndAutoSync = async () => {
       try {
-        const response = await fetch('/api/sync/auto');
-        const data = await response.json();
-        
-        if (data.cardsAdded) {
-          toast({
-            title: "Database aggiornato",
-            description: `Aggiunte ${data.totalCards} carte Pokemon automaticamente`,
-          });
-          // Refresh the data
-          queryClient.invalidateQueries();
-        }
+        await fetch('/api/sync/auto');
+        // Refresh the data quietly
+        queryClient.invalidateQueries();
       } catch (error) {
         console.error('Auto-sync check failed:', error);
       }
     };
 
     checkAndAutoSync();
-  }, [toast]);
+  }, []);
 
-  // Manual sync mutation
-  const syncMutation = useMutation({
-    mutationFn: async () => {
-      const response = await apiRequest('POST', '/api/sync/pokemon');
-      return response.json();
-    },
-    onSuccess: (data) => {
-      toast({
-        title: "Sincronizzazione completata",
-        description: `Database aggiornato con ${data.totalCards} carte`,
-      });
-      queryClient.invalidateQueries();
-    },
-    onError: (error) => {
-      toast({
-        title: "Errore sincronizzazione",
-        description: error.message || "Errore durante la sincronizzazione",
-        variant: "destructive",
-      });
-    },
-  });
+
 
   const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
     queryKey: ['/api/products', {
@@ -136,30 +106,9 @@ export default function Database() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-16">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold pokemon-gradient bg-clip-text text-transparent mb-6">
-            {t('pokemonCardDatabase')}
-          </h1>
-          
-          {/* Sync Button */}
-          <Button
-            onClick={() => syncMutation.mutate()}
-            disabled={syncMutation.isPending}
-            className="bg-pokemon-blue hover:bg-pokemon-blue/90"
-          >
-            {syncMutation.isPending ? (
-              <>
-                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                Sincronizzazione in corso...
-              </>
-            ) : (
-              <>
-                <Download className="h-4 w-4 mr-2" />
-                Aggiorna Database Pokemon
-              </>
-            )}
-          </Button>
-        </div>
+        <h1 className="text-5xl font-bold pokemon-gradient bg-clip-text text-transparent mb-12 text-center">
+          {t('pokemonCardDatabase')}
+        </h1>
 
         {/* Step 1: Expansion Selection */}
         {step === 'expansion' && (
