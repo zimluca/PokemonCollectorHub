@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { insertArticleSchema, insertProductSchema, insertUserCollectionSchema, loginSchema, registerSchema } from "@shared/schema";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
+import { multilingualSync } from "./multilingual-sync.js";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup session middleware
@@ -366,6 +367,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Item removed from collection" });
     } catch (error) {
       res.status(500).json({ message: "Failed to remove item from collection" });
+    }
+  });
+
+  // Multilingual routes
+  app.get('/api/multilingual/test', async (req, res) => {
+    try {
+      const connected = await multilingualSync.testTCGdxConnection();
+      if (connected) {
+        await multilingualSync.testMultilingualCard();
+        res.json({ success: true, message: 'Multilingual test completed successfully' });
+      } else {
+        res.status(500).json({ error: 'TCGdx API connection failed' });
+      }
+    } catch (error) {
+      console.error('Multilingual test error:', error);
+      res.status(500).json({ error: 'Multilingual test failed' });
+    }
+  });
+
+  app.post('/api/multilingual/enhance', async (req, res) => {
+    try {
+      const { limit = 50 } = req.body;
+      await multilingualSync.enhanceExistingCardsWithMultilingual(Number(limit));
+      res.json({ success: true, message: `Enhanced up to ${limit} cards with multilingual data` });
+    } catch (error) {
+      console.error('Multilingual enhancement error:', error);
+      res.status(500).json({ error: 'Multilingual enhancement failed' });
+    }
+  });
+
+  app.get('/api/cards/:id/multilingual', async (req, res) => {
+    try {
+      const cardId = parseInt(req.params.id);
+      const cardData = await multilingualSync.getCardWithAllLanguages(cardId);
+      
+      if (!cardData) {
+        return res.status(404).json({ error: 'Card not found' });
+      }
+      
+      res.json(cardData);
+    } catch (error) {
+      console.error('Get multilingual card error:', error);
+      res.status(500).json({ error: 'Failed to get multilingual card data' });
+    }
+  });
+
+  app.get('/api/multilingual/stats', async (req, res) => {
+    try {
+      const stats = await multilingualSync.getMultilingualStats();
+      res.json(stats);
+    } catch (error) {
+      console.error('Get multilingual stats error:', error);
+      res.status(500).json({ error: 'Failed to get multilingual statistics' });
     }
   });
 

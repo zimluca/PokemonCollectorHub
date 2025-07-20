@@ -15,6 +15,7 @@ import News from '@/pages/news';
 import Database from '@/pages/database';
 import Collection from '@/pages/collection';
 import Landing from '@/pages/landing';
+import MultilingualTest from '@/pages/MultilingualTest';
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -36,6 +37,7 @@ function Router() {
       )}
       <Route path="/news" component={News} />
       <Route path="/database" component={Database} />
+      <Route path="/multilingual" component={MultilingualTest} />
       <Route component={NotFound} />
     </Switch>
   );
