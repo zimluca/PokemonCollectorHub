@@ -200,8 +200,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const existingCards = await storage.getProducts({ search: "" });
       
-      if (existingCards.length < 10) { // If less than 10 cards, trigger sync
-        console.log('Database has few cards, starting auto-sync...');
+      if (existingCards.length < 100) { // If less than 100 cards, trigger sync
+        console.log('*** DATABASE HAS FEW CARDS, STARTING COMPREHENSIVE AUTO-SYNC ***');
         await storage.syncPokemonCards();
         const finalCards = await storage.getProducts();
         res.json({ 

@@ -268,21 +268,42 @@ export class DatabaseStorage implements IStorage {
   }
 
   async upsertProduct(productData: any): Promise<Product> {
-    // Check if product with tcgId exists
-    if (productData.tcgId) {
-      const existing = await db.select().from(products).where(eq(products.tcgId, productData.tcgId));
-      if (existing.length > 0) {
-        const [product] = await db.update(products)
-          .set({ ...productData, updatedAt: new Date() })
-          .where(eq(products.tcgId, productData.tcgId))
-          .returning();
-        return product;
+    try {
+      // Validate required fields
+      if (!productData.name || !productData.collectionId || !productData.productTypeId) {
+        console.error('Missing required fields:', {
+          name: productData.name,
+          collectionId: productData.collectionId,
+          productTypeId: productData.productTypeId
+        });
+        throw new Error('Missing required product data fields');
       }
-    }
 
-    // Create new product
-    const [product] = await db.insert(products).values(productData).returning();
-    return product;
+      // Check if product with tcgId exists
+      if (productData.tcgId) {
+        const existing = await db.select().from(products).where(eq(products.tcgId, productData.tcgId));
+        if (existing.length > 0) {
+          console.log(`Updating existing card: ${productData.name}`);
+          const [product] = await db.update(products)
+            .set({ ...productData, updatedAt: new Date() })
+            .where(eq(products.tcgId, productData.tcgId))
+            .returning();
+          return product;
+        }
+      }
+
+      // Create new product
+      console.log(`Creating new card: ${productData.name} (${productData.tcgId})`);
+      const [product] = await db.insert(products).values({
+        ...productData,
+        updatedAt: new Date(),
+      }).returning();
+      return product;
+    } catch (error) {
+      console.error('Error in upsertProduct:', error);
+      console.error('Product data:', JSON.stringify(productData, null, 2));
+      throw error;
+    }
   }
 
   async syncPokemonCards(): Promise<void> {
@@ -321,11 +342,13 @@ export class DatabaseStorage implements IStorage {
         throw new Error('No cards were fetched from the Pokemon TCG API');
       }
 
-      console.log(`Processing ${allCards.length} Pokemon cards for database insertion...`);
+      console.log(`*** STARTING DATABASE PROCESSING FOR ${allCards.length} POKEMON CARDS ***`);
 
       // Get existing collections and product types
       const allCollections = await this.getCollections();
       let allProductTypes = await this.getProductTypes();
+      
+      console.log(`Found ${allCollections.length} existing collections and ${allProductTypes.length} product types`);
 
       // Find or create "Carte Singole" product type
       let carteSingoleType = allProductTypes.find(pt => pt.nameIt === "Carte Singole" || pt.name === "Single Cards");
@@ -343,9 +366,14 @@ export class DatabaseStorage implements IStorage {
       let processedCount = 0;
       let createdCollections = 0;
 
+      console.log(`*** BEGINNING CARD PROCESSING LOOP FOR ${allCards.length} CARDS ***`);
+      
       // Process cards in batches
       for (const card of allCards) {
         try {
+          if (processedCount === 0) {
+            console.log(`Processing first card: ${card.name} from set ${card.set.name}`);
+          }
           // Find or create collection for this set
           let collection = allCollections.find(c => c.name === card.set.name);
           if (!collection) {
@@ -362,7 +390,7 @@ export class DatabaseStorage implements IStorage {
             createdCollections++;
           }
 
-          // Prepare card data for "Carte Singole"
+          // Prepare card data for "Carte Singole" 
           const cardData = {
             tcgId: card.id,
             name: card.name,
@@ -384,8 +412,15 @@ export class DatabaseStorage implements IStorage {
             prices: this.extractPrices(card),
           };
 
-          await this.upsertProduct(cardData);
-          processedCount++;
+          console.log(`Attempting to save card: ${card.name} (${card.id}) to collection ${collection.name} (${collection.id}) as type ${carteSingoleType.nameIt} (${carteSingoleType.id})`);
+          
+          const savedCard = await this.upsertProduct(cardData);
+          if (savedCard) {
+            processedCount++;
+            console.log(`✓ Successfully saved card ${processedCount}: ${savedCard.name}`);
+          } else {
+            console.error(`✗ Failed to save card: ${card.name}`);
+          }
 
           if (processedCount % 500 === 0) {
             console.log(`Progress: ${processedCount}/${allCards.length} cards processed...`);
