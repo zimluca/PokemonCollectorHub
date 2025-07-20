@@ -123,4 +123,9 @@ The application is designed to be easily deployable to various platforms while m
 - **2025-01-20**: Database now supports comprehensive Pokemon card collection with authentic images, prices, and metadata
 - **2025-01-20**: Fixed frontend product type IDs to correctly show Pokemon cards when selecting "Carte Singole"
 - **2025-01-20**: Added sorting: collections by release date (newest first), cards by collection number (ascending)
-- **2025-01-20**: Complete database populated with 19,500+ Pokemon cards from all TCG sets including classic Base, Jungle, Fossil
+- **2025-01-20**: Complete database populated with 39,000 Pokemon cards (19,500 EN + 19,500 IT) from all TCG sets
+- **2025-01-20**: Implemented full dual-language support: English and Italian versions of every card
+- **2025-01-20**: Fixed card image display to show top portion instead of center for better Pokemon visibility
+- **2025-01-20**: Added year-based grouping for collections display (2025, 2024, 2023, etc.)
+- **2025-01-20**: Removed 522 duplicate collections, maintaining 169 unique collections
+- **2025-01-20**: Implemented proper numeric sorting for card numbers (1, 2, 3... instead of 1, 10, 2...)

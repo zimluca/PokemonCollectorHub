@@ -402,7 +402,7 @@ export class DatabaseStorage implements IStorage {
             productTypeId: carteSingoleType.id,  // Always use "Carte Singole"
             cardNumber: card.number,
             rarity: card.rarity,
-            language: "en",
+            language: "en", // Default English first
             imageUrl: card.images?.small || null,
             imageUrlLarge: card.images?.large || null,
             setName: card.set.name,
@@ -415,12 +415,24 @@ export class DatabaseStorage implements IStorage {
 
           console.log(`Attempting to save card: ${card.name} (${card.id}) to collection ${collection.name} (${collection.id}) as type ${carteSingoleType.nameIt} (${carteSingoleType.id})`);
           
-          const savedCard = await this.upsertProduct(cardData);
-          if (savedCard) {
+          // Save English version
+          const savedCardEn = await this.upsertProduct(cardData);
+          if (savedCardEn) {
             processedCount++;
-            console.log(`✓ Successfully saved card ${processedCount}: ${savedCard.name}`);
-          } else {
-            console.error(`✗ Failed to save card: ${card.name}`);
+            console.log(`✓ Successfully saved card ${processedCount}: ${savedCardEn.name} (EN)`);
+          }
+          
+          // Also save Italian version with different tcgId
+          const cardDataIt = {
+            ...cardData,
+            tcgId: card.id + "-it",
+            language: "it"
+          };
+          
+          const savedCardIt = await this.upsertProduct(cardDataIt);
+          if (savedCardIt) {
+            processedCount++;
+            console.log(`✓ Successfully saved card ${processedCount}: ${savedCardIt.name} (IT)`);
           }
 
           if (processedCount % 500 === 0) {

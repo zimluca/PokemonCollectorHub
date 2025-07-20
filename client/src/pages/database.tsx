@@ -307,7 +307,7 @@ export default function Database() {
                     <img
                       src={product.imageUrl || 'https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?w=300&h=400&fit=crop'}
                       alt={product.name}
-                      className="w-full h-48 object-cover rounded-t-lg"
+                      className="w-full h-48 object-cover object-top rounded-t-lg"
                     />
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between mb-2">
