@@ -287,12 +287,14 @@ export class DatabaseStorage implements IStorage {
 
   async syncPokemonCards(): Promise<void> {
     try {
-      console.log('Starting automatic Pokemon cards synchronization from ALL sets...');
-
-      // Check if we already have a substantial number of cards
+      console.log('Starting comprehensive Pokemon cards synchronization from ALL sets...');
+      
+      // Check if we need to do a full sync (threshold is now much higher)
       const existingCards = await db.select().from(products).where(isNotNull(products.tcgId));
-      if (existingCards.length > 1000) {
-        console.log(`Database already contains ${existingCards.length} Pokemon cards. Skipping initial sync.`);
+      console.log(`Current database contains ${existingCards.length} Pokemon cards.`);
+      
+      if (existingCards.length > 15000) {
+        console.log(`Database already contains ${existingCards.length} Pokemon cards. Skipping sync.`);
         return;
       }
 
