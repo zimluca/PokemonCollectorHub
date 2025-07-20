@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -6,10 +7,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CardForm } from '@/components/ui/card-form';
+import type { UserCollection } from '@shared/schema';
 
 export default function Collection() {
   const { t } = useTranslation();
   const [editingCard, setEditingCard] = useState(null);
+  
+  const { data: userCollections = [], isLoading } = useQuery<UserCollection[]>({
+    queryKey: ['/api/user-collections'],
+  });
 
   const collectionData = [
     {

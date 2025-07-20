@@ -1,328 +1,159 @@
-
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useLocation } from 'wouter';
-import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Link } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { User, Mail, Lock, Eye, EyeOff } from 'lucide-react';
-
-const loginSchema = z.object({
-  username: z.string().min(3, "Username must be at least 3 characters"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-});
-
-const registerSchema = z.object({
-  username: z.string().min(3, "Username must be at least 3 characters"),
-  email: z.string().email("Please enter a valid email"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  firstName: z.string().optional(),
-  lastName: z.string().optional(),
-});
-
-type LoginFormData = z.infer<typeof loginSchema>;
-type RegisterFormData = z.infer<typeof registerSchema>;
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Loader2, User, Lock } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function Login() {
   const { t } = useTranslation();
-  const [location, setLocation] = useLocation();
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLogin, setIsLogin] = useState(true);
-  const { toast } = useToast();
-
-  const loginForm = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      username: "",
-      password: "",
-    },
+  const { isAuthenticated } = useAuth();
+  const [formData, setFormData] = useState({
+    username: '',
+    password: '',
   });
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const registerForm = useForm<RegisterFormData>({
-    resolver: zodResolver(registerSchema),
-    defaultValues: {
-      username: "",
-      email: "",
-      password: "",
-      firstName: "",
-      lastName: "",
-    },
-  });
+  // Redirect if already authenticated
+  if (isAuthenticated) {
+    window.location.href = '/';
+    return null;
+  }
 
-  const loginMutation = useMutation({
-    mutationFn: async (credentials: LoginFormData) => {
-      return apiRequest("/api/auth/login", {
-        method: "POST",
-        body: JSON.stringify(credentials),
-      });
-    },
-    onSuccess: (data) => {
-      toast({
-        title: "Benvenuto!",
-        description: "Accesso eseguito con successo a PokeHunter.",
-      });
-      localStorage.setItem('user', JSON.stringify(data.user));
-      setLocation('/collection');
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Errore di accesso",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
 
-  const registerMutation = useMutation({
-    mutationFn: async (data: RegisterFormData) => {
-      return apiRequest("/api/auth/register", {
-        method: "POST",
-        body: JSON.stringify(data),
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(formData),
       });
-    },
-    onSuccess: (data) => {
-      toast({
-        title: "Registrazione completata!",
-        description: "Benvenuto in PokeHunter! Ora puoi iniziare a collezionare.",
-      });
-      localStorage.setItem('user', JSON.stringify(data.user));
-      setLocation('/collection');
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Errore di registrazione",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
 
-  const onLoginSubmit = (data: LoginFormData) => {
-    loginMutation.mutate(data);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Errore durante il login');
+      }
+
+      // Redirect to home page on successful login
+      window.location.href = '/';
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Errore durante il login');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const onRegisterSubmit = (data: RegisterFormData) => {
-    registerMutation.mutate(data);
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pokemon-blue via-pokemon-purple to-pokemon-red flex items-center justify-center p-4">
-      <div className="absolute inset-0 opacity-10">
-        <div className="absolute top-20 left-20 w-32 h-32 rounded-full bg-pokemon-yellow animate-pulse"></div>
-        <div className="absolute bottom-20 right-20 w-24 h-24 rounded-full bg-pokemon-green animate-bounce"></div>
-        <div className="absolute top-1/2 left-1/4 w-16 h-16 rounded-full bg-white animate-pulse"></div>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-indigo-900 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <Card className="shadow-2xl border-0 bg-white/90 backdrop-blur-sm">
+          <CardHeader className="space-y-1 text-center">
+            <CardTitle className="text-3xl font-bold text-pokemon-blue">
+              Accedi a PokeHunter
+            </CardTitle>
+            <CardDescription className="text-gray-600">
+              Inserisci le tue credenziali per accedere
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
 
-      <Card className="w-full max-w-md relative z-10 backdrop-blur-sm bg-white/95">
-        <CardHeader className="text-center pb-2">
-          <div className="flex justify-center mb-4">
-            <div className="w-20 h-20 bg-gradient-to-r from-pokemon-red to-pokemon-blue rounded-full flex items-center justify-center">
-              <User className="h-10 w-10 text-white" />
-            </div>
-          </div>
-          <h1 className="text-3xl font-bold pokemon-gradient bg-clip-text text-transparent">
-            {isLogin ? t('login') : t('register')}
-          </h1>
-          <p className="text-gray-600 mt-2">
-            {isLogin ? 'Accedi alla tua collezione Pokemon' : 'Crea il tuo account per iniziare'}
-          </p>
-        </CardHeader>
-
-        <CardContent>
-          {isLogin ? (
-            <Form {...loginForm}>
-              <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
-                <FormField
-                  control={loginForm.control}
-                  name="username"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Username</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                          <Input placeholder="Il tuo username" className="pl-10" {...field} />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={loginForm.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Password</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                          <Input 
-                            type={showPassword ? "text" : "password"}
-                            placeholder="La tua password"
-                            className="pl-10 pr-10" 
-                            {...field} 
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
-                          >
-                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          </button>
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <Button
-                  type="submit"
-                  className="w-full bg-gradient-to-r from-pokemon-red to-pokemon-blue hover:from-pokemon-red/90 hover:to-pokemon-blue/90 text-white font-semibold py-3"
-                  disabled={loginMutation.isPending}
-                >
-                  {loginMutation.isPending ? 'Accesso...' : 'Accedi'}
-                </Button>
-              </form>
-            </Form>
-          ) : (
-            <Form {...registerForm}>
-              <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
-                <FormField
-                  control={registerForm.control}
-                  name="username"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Username</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                          <Input placeholder="Il tuo username" className="pl-10" {...field} />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={registerForm.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                          <Input type="email" placeholder="La tua email" className="pl-10" {...field} />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={registerForm.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Password</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                          <Input 
-                            type={showPassword ? "text" : "password"}
-                            placeholder="La tua password"
-                            className="pl-10 pr-10" 
-                            {...field} 
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
-                          >
-                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          </button>
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={registerForm.control}
-                    name="firstName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nome</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Nome" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={registerForm.control}
-                    name="lastName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Cognome</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Cognome" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="username" className="text-gray-700 font-medium">
+                  Username
+                </Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="username"
+                    name="username"
+                    type="text"
+                    placeholder="Inserisci il tuo username"
+                    value={formData.username}
+                    onChange={handleChange}
+                    required
+                    className="pl-10 border-gray-200 focus:border-pokemon-blue focus:ring-pokemon-blue"
                   />
                 </div>
+              </div>
 
-                <Button
-                  type="submit"
-                  className="w-full bg-gradient-to-r from-pokemon-red to-pokemon-blue hover:from-pokemon-red/90 hover:to-pokemon-blue/90 text-white font-semibold py-3"
-                  disabled={registerMutation.isPending}
-                >
-                  {registerMutation.isPending ? 'Registrazione...' : 'Registrati'}
-                </Button>
-              </form>
-            </Form>
-          )}
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-gray-700 font-medium">
+                  Password
+                </Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="password"
+                    name="password"
+                    type="password"
+                    placeholder="Inserisci la tua password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    required
+                    className="pl-10 border-gray-200 focus:border-pokemon-blue focus:ring-pokemon-blue"
+                  />
+                </div>
+              </div>
 
-          <div className="mt-6 text-center">
-            <p className="text-gray-600">
-              {isLogin ? 'Non hai un account?' : 'Hai già un account?'}
-              <button
-                onClick={() => setIsLogin(!isLogin)}
-                className="ml-2 text-pokemon-blue hover:text-pokemon-blue/80 font-semibold"
+              <Button
+                type="submit"
+                className="w-full bg-gradient-to-r from-pokemon-blue to-pokemon-purple hover:from-pokemon-purple hover:to-pokemon-blue text-white font-semibold py-2 px-4 rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
+                disabled={isLoading}
               >
-                {isLogin ? 'Registrati' : 'Accedi'}
-              </button>
-            </p>
-          </div>
-
-          <div className="mt-4 text-center">
-            <Link href="/">
-              <Button variant="ghost" className="text-gray-500 hover:text-gray-700">
-                Torna alla home
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Accesso in corso...
+                  </>
+                ) : (
+                  'Accedi'
+                )}
               </Button>
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
+            </form>
+
+            <div className="text-center space-y-2">
+              <p className="text-sm text-gray-600">
+                Non hai un account?{' '}
+                <Link href="/register">
+                  <span className="text-pokemon-blue hover:text-pokemon-purple font-semibold cursor-pointer">
+                    Registrati qui
+                  </span>
+                </Link>
+              </p>
+              <Link href="/">
+                <span className="text-sm text-gray-500 hover:text-gray-700 cursor-pointer">
+                  Torna alla homepage
+                </span>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

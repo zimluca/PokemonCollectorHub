@@ -13,13 +13,14 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
-// User storage table for Replit Auth
+// User storage table for classic auth
 export const users = pgTable("users", {
-  id: varchar("id").primaryKey().notNull(),
-  email: varchar("email").unique(),
+  id: serial("id").primaryKey(),
+  username: varchar("username").notNull().unique(),
+  email: varchar("email").notNull().unique(),
+  password: varchar("password").notNull(),
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
-  profileImageUrl: varchar("profile_image_url"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -80,7 +81,7 @@ export const products = pgTable("products", {
 
 export const userCollections = pgTable("user_collections", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").references(() => users.id),
+  userId: integer("user_id").references(() => users.id),
   productId: integer("product_id").references(() => products.id),
   quantity: integer("quantity").default(1),
   addedAt: timestamp("added_at").defaultNow(),
@@ -91,7 +92,21 @@ export const insertUserSchema = createInsertSchema(users).omit({
   updatedAt: true,
 });
 
-export type UpsertUser = typeof users.$inferInsert;
+export const loginSchema = z.object({
+  username: z.string().min(3, "Username deve essere almeno 3 caratteri"),
+  password: z.string().min(6, "Password deve essere almeno 6 caratteri"),
+});
+
+export const registerSchema = z.object({
+  username: z.string().min(3, "Username deve essere almeno 3 caratteri"),
+  email: z.string().email("Inserisci un email valido"),
+  password: z.string().min(6, "Password deve essere almeno 6 caratteri"),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+});
+
+export type LoginData = z.infer<typeof loginSchema>;
+export type RegisterData = z.infer<typeof registerSchema>;
 
 export const insertArticleSchema = createInsertSchema(articles).omit({
   id: true,

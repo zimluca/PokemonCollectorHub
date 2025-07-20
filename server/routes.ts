@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertArticleSchema, insertProductSchema, insertUserCollectionSchema } from "@shared/schema";
+import { insertArticleSchema, insertProductSchema, insertUserCollectionSchema, loginSchema, registerSchema } from "@shared/schema";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 
@@ -41,35 +41,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.session.userId;
       const user = await storage.getUser(userId);
-      res.json(user);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      // Remove password from response
+      const { password, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
     }
   });
 
-  // Login route - for demo purposes, create a demo user
+  // Register route
+  app.post('/api/auth/register', async (req: any, res) => {
+    try {
+      const validatedData = registerSchema.parse(req.body);
+      
+      // Check if user already exists
+      const existingUser = await storage.getUserByUsername(validatedData.username);
+      if (existingUser) {
+        return res.status(400).json({ message: "Username già esistente" });
+      }
+
+      const existingEmail = await storage.getUserByEmail(validatedData.email);
+      if (existingEmail) {
+        return res.status(400).json({ message: "Email già registrata" });
+      }
+
+      const user = await storage.createUser(validatedData);
+      req.session.userId = user.id;
+      
+      // Remove password from response
+      const { password, ...userWithoutPassword } = user;
+      res.status(201).json({ user: userWithoutPassword, message: "Registrazione completata" });
+    } catch (error) {
+      console.error("Registration error:", error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ message: error.errors[0]?.message || "Dati non validi" });
+      }
+      res.status(500).json({ message: "Errore durante la registrazione" });
+    }
+  });
+
+  // Login route
   app.post('/api/auth/login', async (req: any, res) => {
     try {
-      // Create or get demo user
-      const demoUserId = 'demo-user-1';
-      let user = await storage.getUser(demoUserId);
+      const validatedData = loginSchema.parse(req.body);
       
+      const user = await storage.loginUser(validatedData);
       if (!user) {
-        user = await storage.upsertUser({
-          id: demoUserId,
-          email: 'demo@pokehunter.com',
-          firstName: 'Demo',
-          lastName: 'User',
-          profileImageUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&crop=face'
-        });
+        return res.status(401).json({ message: "Username o password non corretti" });
       }
 
       req.session.userId = user.id;
-      res.json({ user, message: "Login successful" });
+      
+      // Remove password from response
+      const { password, ...userWithoutPassword } = user;
+      res.json({ user: userWithoutPassword, message: "Login effettuato con successo" });
     } catch (error) {
       console.error("Login error:", error);
-      res.status(500).json({ message: "Login failed" });
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ message: error.errors[0]?.message || "Dati non validi" });
+      }
+      res.status(500).json({ message: "Errore durante il login" });
     }
   });
 
@@ -77,9 +112,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/auth/logout', async (req: any, res) => {
     req.session.destroy((err: any) => {
       if (err) {
-        return res.status(500).json({ message: "Logout failed" });
+        return res.status(500).json({ message: "Errore durante il logout" });
       }
-      res.json({ message: "Logout successful" });
+      res.json({ message: "Logout effettuato con successo" });
     });
   });
 
@@ -213,9 +248,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User collection routes (protected)
-  app.get("/api/user-collections/:userId", isAuthenticated, async (req, res) => {
+  app.get("/api/user-collections", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.params.userId;
+      const userId = req.session.userId;
       const userCollections = await storage.getUserCollection(userId);
       res.json(userCollections);
     } catch (error) {
@@ -233,9 +268,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/user-collections/:userId/:productId", isAuthenticated, async (req, res) => {
+  app.delete("/api/user-collections/:productId", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.params.userId;
+      const userId = req.session.userId;
       const productId = parseInt(req.params.productId);
       const success = await storage.removeFromUserCollection(userId, productId);
       if (!success) {

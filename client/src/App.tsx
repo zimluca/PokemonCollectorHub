@@ -9,6 +9,8 @@ import { Header } from './components/layout/header';
 import { Footer } from './components/layout/footer';
 import { useAuth } from "@/hooks/useAuth";
 import Home from '@/pages/home';
+import Login from '@/pages/login';
+import Register from '@/pages/register';
 import News from '@/pages/news';
 import Database from '@/pages/database';
 import Collection from '@/pages/collection';
@@ -21,7 +23,11 @@ function Router() {
   return (
     <Switch>
       {isLoading || !isAuthenticated ? (
-        <Route path="/" component={Landing} />
+        <>
+          <Route path="/" component={Landing} />
+          <Route path="/login" component={Login} />
+          <Route path="/register" component={Register} />
+        </>
       ) : (
         <>
           <Route path="/" component={Home} />

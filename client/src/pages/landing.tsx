@@ -2,26 +2,17 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { User, Zap } from 'lucide-react';
 
 export default function Landing() {
   const { t } = useTranslation();
 
-  const handleLogin = async () => {
-    try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-      });
-      
-      if (response.ok) {
-        window.location.reload();
-      }
-    } catch (error) {
-      console.error('Login failed:', error);
-    }
+  const handleGetStarted = () => {
+    window.location.href = '/register';
+  };
+
+  const handleLogin = () => {
+    window.location.href = '/login';
   };
 
   return (
@@ -96,9 +87,26 @@ export default function Landing() {
           <p className="text-gray-600 dark:text-gray-300 mb-6 max-w-2xl mx-auto">
             {t('landing.cta.description', 'Unisciti a migliaia di collezionisti che usano PokeHunter per gestire le loro collezioni Pokemon')}
           </p>
-          <Button size="lg" onClick={handleLogin} className="px-8 py-3">
-            {t('landing.cta.button', 'Accedi con Replit')}
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button 
+              size="lg" 
+              onClick={handleGetStarted}
+              className="bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-gray-900 font-semibold shadow-xl hover:shadow-2xl transition-all transform hover:scale-105"
+            >
+              <Zap className="h-5 w-5 mr-2" />
+              {t('get_started', 'Inizia ora')}
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              size="lg"
+              onClick={handleLogin}
+              className="border-2 border-pokemon-blue bg-white/10 backdrop-blur-sm text-pokemon-blue hover:bg-pokemon-blue hover:text-white font-semibold shadow-xl hover:shadow-2xl transition-all transform hover:scale-105"
+            >
+              <User className="h-5 w-5 mr-2" />
+              {t('login', 'Accedi')}
+            </Button>
+          </div>
         </div>
       </div>
     </div>
