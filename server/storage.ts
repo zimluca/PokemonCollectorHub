@@ -199,7 +199,7 @@ export class DatabaseStorage implements IStorage {
 
   // Collection methods
   async getCollections(): Promise<Collection[]> {
-    return await db.select().from(collections);
+    return await db.select().from(collections).orderBy(desc(collections.releaseDate));
   }
 
   async getCollection(id: number): Promise<Collection | undefined> {
@@ -254,7 +254,8 @@ export class DatabaseStorage implements IStorage {
       query = query.where(and(...whereConditions));
     }
 
-    return query;
+    // Order by cardNumber (collection number) ascending
+    return query.orderBy(products.cardNumber);
   }
 
   async getProduct(id: number): Promise<Product | undefined> {

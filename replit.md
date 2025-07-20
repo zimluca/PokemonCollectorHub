@@ -121,3 +121,6 @@ The application is designed to be easily deployable to various platforms while m
 - **2025-01-20**: Fixed login button functionality to properly redirect to login page
 - **2025-01-20**: Implemented intelligent API fetching that processes all sets sequentially with rate limiting
 - **2025-01-20**: Database now supports comprehensive Pokemon card collection with authentic images, prices, and metadata
+- **2025-01-20**: Fixed frontend product type IDs to correctly show Pokemon cards when selecting "Carte Singole"
+- **2025-01-20**: Added sorting: collections by release date (newest first), cards by collection number (ascending)
+- **2025-01-20**: Complete database populated with 19,500+ Pokemon cards from all TCG sets including classic Base, Jungle, Fossil
