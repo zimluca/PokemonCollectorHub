@@ -6,8 +6,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Plus, Heart, Languages, Flame, Star, TrendingUp, Clock } from 'lucide-react';
-import { queryClient } from '@/lib/queryClient';
+import { Search, Plus, Heart, Languages, Flame, Star, TrendingUp, Clock, Download, RefreshCw } from 'lucide-react';
+import { queryClient, apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 import type { Product, Collection, ProductType } from '@shared/schema';
 
 export default function Database() {
@@ -17,6 +18,7 @@ export default function Database() {
   const [selectedType, setSelectedType] = useState<string>('');
   const [selectedLanguage, setSelectedLanguage] = useState<string>(i18n.language);
   const [step, setStep] = useState<'expansion' | 'type' | 'products'>('expansion');
+  const { toast } = useToast();
 
   // Auto-sync check on component mount
   useEffect(() => {
@@ -51,6 +53,37 @@ export default function Database() {
 
   const { data: productTypes = [] } = useQuery<ProductType[]>({
     queryKey: ['/api/product-types'],
+  });
+
+  // Get sync status
+  const { data: syncStatus } = useQuery({
+    queryKey: ['/api/sync/status'],
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
+
+  // Comprehensive sync mutation
+  const comprehensiveSyncMutation = useMutation({
+    mutationFn: async (forceUpdate: boolean = false) => {
+      const response = await apiRequest('/api/sync/pokemon/all', {
+        method: 'POST',
+        body: JSON.stringify({ forceUpdate }),
+      });
+      return response;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Sincronizzazione Avviata",
+        description: "Sincronizzazione completa di tutte le carte Pokemon avviata. Controlla i log per il progresso.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/sync/status'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Errore",
+        description: error.message || "Errore durante l'avvio della sincronizzazione",
+        variant: "destructive",
+      });
+    },
   });
 
   const getRarityColor = (rarity: string) => {
@@ -106,9 +139,58 @@ export default function Database() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-16">
       <div className="container mx-auto px-4">
-        <h1 className="text-5xl font-bold pokemon-gradient bg-clip-text text-transparent mb-12 text-center">
-          {t('pokemonCardDatabase')}
-        </h1>
+        <div className="text-center mb-12">
+          <h1 className="text-5xl font-bold pokemon-gradient bg-clip-text text-transparent mb-6">
+            {t('pokemonCardDatabase')}
+          </h1>
+          
+          {/* Sync Status and Actions */}
+          <div className="bg-white rounded-xl shadow-lg p-6 max-w-2xl mx-auto mb-8">
+            <div className="flex items-center justify-between">
+              <div className="text-left">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Database Status</h3>
+                <div className="space-y-1 text-sm text-gray-600">
+                  <p>Carte Pokemon totali: <span className="font-medium text-blue-600">{syncStatus?.pokemonCards || 0}</span></p>
+                  <p>Prodotti totali: <span className="font-medium">{syncStatus?.totalProducts || 0}</span></p>
+                  {syncStatus?.lastUpdate && (
+                    <p>Ultimo aggiornamento: <span className="font-medium">{new Date(syncStatus.lastUpdate).toLocaleDateString('it-IT')}</span></p>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-col space-y-2">
+                <Button
+                  onClick={() => comprehensiveSyncMutation.mutate(false)}
+                  disabled={comprehensiveSyncMutation.isPending}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                >
+                  {comprehensiveSyncMutation.isPending ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      Sincronizzando...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="h-4 w-4 mr-2" />
+                      Sincronizza Tutte le Carte
+                    </>
+                  )}
+                </Button>
+                <Button
+                  onClick={() => comprehensiveSyncMutation.mutate(true)}
+                  disabled={comprehensiveSyncMutation.isPending}
+                  variant="outline"
+                  className="text-xs"
+                >
+                  Forza Aggiornamento
+                </Button>
+              </div>
+            </div>
+            <div className="mt-4 text-xs text-gray-500">
+              <p>• "Sincronizza Tutte le Carte": Aggiunge solo le carte mancanti dal database</p>
+              <p>• "Forza Aggiornamento": Aggiorna anche le carte esistenti con nuovi dati</p>
+            </div>
+          </div>
+        </div>
 
         {/* Step 1: Expansion Selection */}
         {step === 'expansion' && (

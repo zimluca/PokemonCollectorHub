@@ -118,7 +118,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Pokemon synchronization route
+  // Pokemon synchronization route (basic sync)
   app.post("/api/sync/pokemon", isAuthenticated, async (req, res) => {
     try {
       console.log('Starting Pokemon cards synchronization...');
@@ -137,6 +137,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         message: "Errore nella sincronizzazione delle carte Pokemon",
         error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Comprehensive sync route for ALL Pokemon cards
+  app.post("/api/sync/pokemon/all", isAuthenticated, async (req, res) => {
+    try {
+      const forceUpdate = req.body.forceUpdate === true;
+      
+      console.log(`Starting comprehensive Pokemon sync (forceUpdate: ${forceUpdate})`);
+      
+      // This will take a long time, so send immediate response
+      res.json({ 
+        message: "Sincronizzazione completa di TUTTE le carte Pokemon avviata",
+        status: "in_progress",
+        timestamp: new Date().toISOString(),
+        note: "Questa operazione potrebbe richiedere diversi minuti. Controlla i log per il progresso."
+      });
+
+      // Start the comprehensive sync process in background
+      storage.syncAllPokemonCards(forceUpdate).then(async () => {
+        const finalProducts = await storage.getProducts();
+        const pokemonCards = finalProducts.filter(p => p.tcgId);
+        console.log(`Comprehensive Pokemon sync completed! Total Pokemon cards: ${pokemonCards.length}`);
+      }).catch((error) => {
+        console.error('Comprehensive Pokemon sync failed:', error);
+      });
+
+    } catch (error) {
+      console.error('Error starting comprehensive Pokemon sync:', error);
+      res.status(500).json({ 
+        message: "Errore nell'avvio della sincronizzazione completa",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Get sync status route
+  app.get("/api/sync/status", async (req, res) => {
+    try {
+      const products = await storage.getProducts();
+      const pokemonCards = products.filter(p => p.tcgId);
+      
+      res.json({
+        totalProducts: products.length,
+        pokemonCards: pokemonCards.length,
+        lastUpdate: pokemonCards.length > 0 ? 
+          Math.max(...pokemonCards.map(p => new Date(p.updatedAt || 0).getTime())) : null,
+        hasPokemonCards: pokemonCards.length > 0
+      });
+    } catch (error) {
+      console.error('Error getting sync status:', error);
+      res.status(500).json({ 
+        message: "Errore nel recupero dello stato di sincronizzazione"
       });
     }
   });

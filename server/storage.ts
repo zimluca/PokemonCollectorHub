@@ -6,7 +6,7 @@ import {
   type LoginData, type RegisterData
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, like, or, desc, ilike } from "drizzle-orm";
+import { eq, and, like, or, desc, ilike, isNotNull } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { pokemonAPI, type PokemonTCGCard } from "./pokemon-api";
 
@@ -44,6 +44,7 @@ export interface IStorage {
   createProduct(product: InsertProduct): Promise<Product>;
   upsertProduct(product: any): Promise<Product>;
   syncPokemonCards(): Promise<void>;
+  syncAllPokemonCards(forceUpdate?: boolean): Promise<void>;
 
   // User collection methods
   getUserCollection(userId: number): Promise<UserCollection[]>;
@@ -286,92 +287,40 @@ export class DatabaseStorage implements IStorage {
 
   async syncPokemonCards(): Promise<void> {
     try {
-      console.log('Starting Pokemon cards synchronization...');
+      console.log('Starting comprehensive Pokemon cards synchronization...');
+      console.log('This will fetch ALL Pokemon cards from the TCG API...');
 
-      // Get popular sets to sync
-      const popularSets = await pokemonAPI.getPopularSets();
+      // Check if we already have cards to avoid duplicate work
+      const existingCards = await db.select().from(products).where(isNotNull(products.tcgId)).limit(1);
+      if (existingCards.length > 0) {
+        console.log('Cards already exist in database. Use manual sync to update or add new cards.');
+        return;
+      }
+
+      // Fetch ALL cards from the Pokemon TCG API
       let allCards: any[] = [];
       
-      // Get cards from multiple sets
-      for (const setId of popularSets.slice(0, 2)) { // Get cards from first 2 sets
-        console.log(`Fetching cards from set: ${setId}`);
+      try {
+        // Use the comprehensive method to get all cards from all sets
+        allCards = await pokemonAPI.getAllCardsFromAllSets();
+        console.log(`Successfully fetched ${allCards.length} total cards from API`);
+      } catch (error) {
+        console.error('Error fetching from sets, trying direct API fetch:', error);
         try {
-          const setCards = await pokemonAPI.getAllCardsFromSet(setId);
-          allCards.push(...setCards.slice(0, 50)); // Limit to 50 cards per set
-        } catch (error) {
-          console.error(`Error fetching cards from set ${setId}:`, error);
+          // Fallback to direct API pagination
+          allCards = await pokemonAPI.getAllCards();
+          console.log(`Fallback fetch successful: ${allCards.length} cards`);
+        } catch (fallbackError) {
+          console.error('All API methods failed:', fallbackError);
+          throw new Error('Unable to fetch Pokemon cards from API');
         }
       }
 
-      // If API fails, fallback to sample data
       if (allCards.length === 0) {
-        console.log('API failed, using fallback sample data...');
-        allCards = [
-          {
-            id: 'sv1-1',
-            name: 'Charizard ex',
-            set: { id: 'sv1', name: 'Scarlet & Violet' },
-            number: '001',
-            rarity: 'Ultra Rare',
-            images: { 
-              small: 'https://images.pokemontcg.io/sv1/1.png',
-              large: 'https://images.pokemontcg.io/sv1/1_hires.png'
-            },
-            flavorText: 'A legendary fire-type Pokemon',
-            artist: 'PLANETA Mochizuki',
-            hp: '330',
-            types: ['Fire']
-          },
-          {
-            id: 'sv1-25',
-            name: 'Pikachu',
-            set: { id: 'sv1', name: 'Scarlet & Violet' },
-            number: '025',
-            rarity: 'Common',
-            images: { 
-              small: 'https://images.pokemontcg.io/sv1/25.png',
-              large: 'https://images.pokemontcg.io/sv1/25_hires.png'
-            },
-            flavorText: 'An electric mouse Pokemon',
-            artist: 'Kouki Saitou',
-            hp: '60',
-            types: ['Lightning']
-          },
-          {
-            id: 'sv2-1',
-            name: 'Pikachu ex',
-            set: { id: 'sv2', name: 'Paldea Evolved' },
-            number: '85',
-            rarity: 'Ultra Rare',
-            images: { 
-              small: 'https://dz3we2x72f7ol.cloudfront.net/expansions/paldea-evolved/en-us/SV02_EN_85.png',
-              large: 'https://dz3we2x72f7ol.cloudfront.net/expansions/paldea-evolved/en-us/SV02_EN_85_hires.png'
-            },
-            flavorText: 'Electric-type Pokemon ex',
-            artist: 'Ayaka Yoshida',
-            hp: '200',
-            types: ['Electric']
-          },
-          {
-            id: 'sv2-2',
-            name: 'Charizard ex',
-            set: { id: 'sv2', name: 'Paldea Evolved' },
-            number: '054',
-            rarity: 'Ultra Rare',
-            images: { 
-              small: 'https://dz3we2x72f7ol.cloudfront.net/expansions/paldea-evolved/en-us/SV02_EN_54.png',
-              large: 'https://dz3we2x72f7ol.cloudfront.net/expansions/paldea-evolved/en-us/SV02_EN_54_hires.png'
-            },
-            flavorText: 'Fire/Flying-type Pokemon ex',
-            artist: 'PLANETA Mochizuki',
-            hp: '330',
-            types: ['Fire']
-          }
-        ];
+        throw new Error('No cards were fetched from the Pokemon TCG API');
       }
 
-      const cards = allCards;
-      console.log(`Retrieved ${cards.length} sample cards for demonstration`);
+      console.log(`Processing ${allCards.length} Pokemon cards for database insertion...`);
 
       // Get existing collections and product types
       const allCollections = await this.getCollections();
@@ -385,7 +334,7 @@ export class DatabaseStorage implements IStorage {
       let processedCount = 0;
 
       // Process cards in batches
-      for (const card of cards) {
+      for (const card of allCards) {
         try {
           // Find or create collection for this set
           let collection = allCollections.find(c => c.name === card.set.name);
@@ -420,7 +369,7 @@ export class DatabaseStorage implements IStorage {
             artist: card.artist || null,
             hp: card.hp || null,
             types: card.types || null,
-            prices: null,
+            prices: this.extractPrices(card),
           };
 
           await this.upsertProduct(productData);
@@ -437,6 +386,137 @@ export class DatabaseStorage implements IStorage {
       console.log(`Successfully synchronized ${processedCount} Pokemon cards`);
     } catch (error) {
       console.error('Error in Pokemon cards synchronization:', error);
+      throw error;
+    }
+  }
+
+  private extractPrices(card: any): any {
+    // Extract prices from TCG Player and Cardmarket data
+    const prices: any = {};
+    
+    if (card.tcgplayer?.prices) {
+      prices.tcgplayer = card.tcgplayer.prices;
+    }
+    
+    if (card.cardmarket?.prices) {
+      prices.cardmarket = card.cardmarket.prices;
+    }
+    
+    return Object.keys(prices).length > 0 ? prices : null;
+  }
+
+  async syncAllPokemonCards(forceUpdate: boolean = false): Promise<void> {
+    try {
+      console.log('Starting manual Pokemon cards synchronization...');
+      
+      if (!forceUpdate) {
+        const existingCount = await db.select().from(products).where(isNotNull(products.tcgId));
+        console.log(`Found ${existingCount.length} existing Pokemon cards in database`);
+      }
+
+      // Fetch ALL cards from the Pokemon TCG API
+      let allCards: any[] = [];
+      
+      try {
+        allCards = await pokemonAPI.getAllCardsFromAllSets();
+        console.log(`Successfully fetched ${allCards.length} total cards from API`);
+      } catch (error) {
+        console.error('Error fetching from sets, trying direct API fetch:', error);
+        try {
+          allCards = await pokemonAPI.getAllCards();
+          console.log(`Fallback fetch successful: ${allCards.length} cards`);
+        } catch (fallbackError) {
+          console.error('All API methods failed:', fallbackError);
+          throw new Error('Unable to fetch Pokemon cards from API');
+        }
+      }
+
+      if (allCards.length === 0) {
+        throw new Error('No cards were fetched from the Pokemon TCG API');
+      }
+
+      console.log(`Processing ${allCards.length} Pokemon cards for database insertion...`);
+
+      // Get existing collections and product types
+      const allCollections = await this.getCollections();
+      const allProductTypes = await this.getProductTypes();
+
+      const cardProductType = allProductTypes.find(pt => pt.name === "Single Cards");
+      if (!cardProductType) {
+        throw new Error("Single Cards product type not found");
+      }
+
+      let processedCount = 0;
+      let updatedCount = 0;
+      let newCount = 0;
+
+      // Process cards in batches
+      for (const card of allCards) {
+        try {
+          // Find or create collection for this set
+          let collection = allCollections.find(c => c.name === card.set.name);
+          if (!collection) {
+            collection = await this.createCollection({
+              name: card.set.name,
+              nameIt: card.set.name,
+              description: `Pokemon TCG set: ${card.set.name}`,
+              descriptionIt: `Set Pokemon TCG: ${card.set.name}`,
+              imageUrl: card.set.images?.logo || null,
+              releaseDate: card.set.releaseDate ? new Date(card.set.releaseDate) : null
+            });
+            allCollections.push(collection);
+          }
+
+          // Check if card already exists
+          const existingCard = await db.select().from(products).where(eq(products.tcgId, card.id));
+          
+          // Prepare product data
+          const productData = {
+            tcgId: card.id,
+            name: card.name,
+            nameIt: card.name,
+            description: card.flavorText || `${card.name} Pokemon card`,
+            descriptionIt: card.flavorText || `Carta Pokemon ${card.name}`,
+            collectionId: collection.id,
+            productTypeId: cardProductType.id,
+            cardNumber: card.number,
+            rarity: card.rarity,
+            language: "en",
+            imageUrl: card.images?.small || null,
+            imageUrlLarge: card.images?.large || null,
+            setName: card.set.name,
+            setId: card.set.id,
+            artist: card.artist || null,
+            hp: card.hp || null,
+            types: card.types || null,
+            prices: this.extractPrices(card),
+          };
+
+          if (existingCard.length > 0) {
+            // Update existing card
+            await db.update(products)
+              .set({ ...productData, updatedAt: new Date() })
+              .where(eq(products.tcgId, card.id));
+            updatedCount++;
+          } else {
+            // Insert new card
+            await this.upsertProduct(productData);
+            newCount++;
+          }
+
+          processedCount++;
+
+          if (processedCount % 500 === 0) {
+            console.log(`Processed ${processedCount}/${allCards.length} cards... (${newCount} new, ${updatedCount} updated)`);
+          }
+        } catch (error) {
+          console.error(`Error processing card ${card.id}:`, error);
+        }
+      }
+
+      console.log(`Manual sync completed! Processed ${processedCount} cards (${newCount} new, ${updatedCount} updated)`);
+    } catch (error) {
+      console.error('Error in manual Pokemon cards synchronization:', error);
       throw error;
     }
   }

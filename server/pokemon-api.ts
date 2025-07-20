@@ -206,28 +206,79 @@ class PokemonTCGAPI {
     ];
   }
 
-  async getAllCards(limit = 1000): Promise<PokemonTCGCard[]> {
-    console.log('Fetching all Pokemon TCG cards...');
-    
-    try {
-      const response = await fetch(
-        `${BASE_URL}/cards?pageSize=${Math.min(limit, 250)}`,
-        {
-          headers: HEADERS,
+  async getAllCards(): Promise<PokemonTCGCard[]> {
+    console.log('Fetching ALL Pokemon TCG cards...');
+    const allCards: PokemonTCGCard[] = [];
+    let page = 1;
+    let hasMorePages = true;
+
+    while (hasMorePages) {
+      try {
+        const response = await fetch(
+          `${BASE_URL}/cards?page=${page}&pageSize=250`,
+          {
+            headers: HEADERS,
+          }
+        );
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
-      );
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        
+        const data = await response.json();
+        console.log(`Fetched page ${page} with ${data.data.length} cards`);
+        allCards.push(...data.data);
+        
+        // Check if we have more pages
+        hasMorePages = data.data.length === 250; // If we got a full page, there might be more
+        page++;
+        
+        // Add a small delay to respect API rate limits
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
+        // Log progress every 10 pages
+        if (page % 10 === 0) {
+          console.log(`Progress: Fetched ${allCards.length} cards so far...`);
+        }
+      } catch (error) {
+        console.error(`Error fetching page ${page}:`, error);
+        break;
       }
-      
-      const data = await response.json();
-      console.log(`Found ${data.data.length} cards`);
-      return data.data;
-    } catch (error) {
-      console.error('Error fetching all cards:', error);
-      return [];
     }
+
+    console.log(`Total cards fetched: ${allCards.length}`);
+    return allCards;
+  }
+
+  async getAllCardsFromAllSets(): Promise<PokemonTCGCard[]> {
+    console.log('Fetching ALL cards from ALL sets...');
+    
+    // First get all sets
+    const sets = await this.getAllSets();
+    console.log(`Found ${sets.length} total sets`);
+    
+    const allCards: PokemonTCGCard[] = [];
+    let setsProcessed = 0;
+    
+    for (const set of sets) {
+      try {
+        console.log(`Processing set ${set.id} (${set.name}) - ${setsProcessed + 1}/${sets.length}`);
+        const setCards = await this.getAllCardsFromSet(set.id);
+        allCards.push(...setCards);
+        setsProcessed++;
+        
+        console.log(`Set ${set.id} complete: ${setCards.length} cards. Total so far: ${allCards.length}`);
+        
+        // Add delay between sets to be respectful to the API
+        await new Promise(resolve => setTimeout(resolve, 500));
+      } catch (error) {
+        console.error(`Error processing set ${set.id}:`, error);
+        continue; // Skip this set and continue with others
+      }
+    }
+
+    console.log(`Completed! Total cards from all sets: ${allCards.length}`);
+    return allCards;
   }
 }
 
