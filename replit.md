@@ -23,12 +23,12 @@ Preferred communication style: Simple, everyday language.
 - **Framework**: Express.js with TypeScript
 - **Database**: PostgreSQL with Drizzle ORM (completely migrated from in-memory storage)
 - **Database Provider**: Neon Database (serverless PostgreSQL)
-- **Authentication**: Secure password hashing with bcryptjs
+- **Authentication**: Classic email/password authentication with secure sessions (migrated from Replit Auth)
 - **Validation**: Zod schemas for type-safe API validation
 - **API Pattern**: RESTful API with JSON responses
 - **Error Handling**: Centralized error middleware
-- **Pokemon TCG Integration**: Pokemon TCG API integration for real card data
-- **Data Initialization**: Database seeding with sample data ready for Pokemon TCG sync
+- **Pokemon TCG Integration**: Full Pokemon TCG API integration with automatic card database population
+- **Auto-sync System**: Automatic database population on startup if empty, manual sync available via UI
 
 ### Database Schema
 The application uses a PostgreSQL database with the following main entities:
@@ -111,3 +111,11 @@ The application uses a PostgreSQL database with the following main entities:
 - Static assets served from `./dist/public`
 
 The application is designed to be easily deployable to various platforms while maintaining a clean separation between frontend and backend concerns.
+
+## Recent Changes: Latest modifications with dates
+
+- **2025-01-20**: Migrated from Replit Auth to classic email/password authentication
+- **2025-01-20**: Implemented comprehensive Pokemon TCG API integration with automatic card database population
+- **2025-01-20**: Added auto-sync system that checks database on startup and populates cards if needed
+- **2025-01-20**: Created manual sync button in database page for user-triggered updates
+- **2025-01-20**: Updated database schema to support Pokemon TCG card data including images, prices, rarity, and metadata

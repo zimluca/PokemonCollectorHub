@@ -119,7 +119,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Pokemon synchronization route
-  app.post("/api/sync/pokemon", async (req, res) => {
+  app.post("/api/sync/pokemon", isAuthenticated, async (req, res) => {
     try {
       console.log('Starting Pokemon cards synchronization...');
       await storage.syncPokemonCards();
@@ -128,15 +128,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const products = await storage.getProducts();
       
       res.json({ 
-        message: "Pokemon cards synchronized successfully",
+        message: "Carte Pokemon sincronizzate con successo",
         timestamp: new Date().toISOString(),
         totalCards: products.length
       });
     } catch (error) {
       console.error('Pokemon sync error:', error);
       res.status(500).json({ 
-        message: "Failed to synchronize Pokemon cards",
+        message: "Errore nella sincronizzazione delle carte Pokemon",
         error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Auto-sync Pokemon cards on startup if database is empty
+  app.get("/api/sync/auto", async (req, res) => {
+    try {
+      const existingCards = await storage.getProducts({ search: "" });
+      
+      if (existingCards.length < 10) { // If less than 10 cards, trigger sync
+        console.log('Database has few cards, starting auto-sync...');
+        await storage.syncPokemonCards();
+        const finalCards = await storage.getProducts();
+        res.json({ 
+          success: true, 
+          message: "Auto-sync completato",
+          cardsAdded: true,
+          totalCards: finalCards.length
+        });
+      } else {
+        res.json({ 
+          success: true, 
+          message: "Database già popolato",
+          cardsAdded: false,
+          totalCards: existingCards.length
+        });
+      }
+    } catch (error) {
+      console.error("Auto-sync error:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Errore durante auto-sync",
+        error: error.message
       });
     }
   });
