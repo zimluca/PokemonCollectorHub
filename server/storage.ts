@@ -304,42 +304,89 @@ export class DatabaseStorage implements IStorage {
     try {
       console.log('Starting Pokemon cards synchronization...');
 
-      // For now, create sample Pokemon cards data to simulate API integration
-      // In production, this would use the real Pokemon TCG API
-      const sampleCards = [
-        {
-          id: 'sv1-1',
-          name: 'Charizard ex',
-          set: { id: 'sv1', name: 'Scarlet & Violet' },
-          number: '001',
-          rarity: 'Ultra Rare',
-          images: { 
-            small: 'https://images.pokemontcg.io/sv1/1.png',
-            large: 'https://images.pokemontcg.io/sv1/1_hires.png'
-          },
-          flavorText: 'A legendary fire-type Pokemon',
-          artist: 'PLANETA Mochizuki',
-          hp: '330',
-          types: ['Fire']
-        },
-        {
-          id: 'sv1-25',
-          name: 'Pikachu',
-          set: { id: 'sv1', name: 'Scarlet & Violet' },
-          number: '025',
-          rarity: 'Common',
-          images: { 
-            small: 'https://images.pokemontcg.io/sv1/25.png',
-            large: 'https://images.pokemontcg.io/sv1/25_hires.png'
-          },
-          flavorText: 'An electric mouse Pokemon',
-          artist: 'Kouki Saitou',
-          hp: '60',
-          types: ['Lightning']
+      // Get popular sets to sync
+      const popularSets = await pokemonAPI.getPopularSets();
+      let allCards: any[] = [];
+      
+      // Get cards from multiple sets
+      for (const setId of popularSets.slice(0, 2)) { // Get cards from first 2 sets
+        console.log(`Fetching cards from set: ${setId}`);
+        try {
+          const setCards = await pokemonAPI.getAllCardsFromSet(setId);
+          allCards.push(...setCards.slice(0, 50)); // Limit to 50 cards per set
+        } catch (error) {
+          console.error(`Error fetching cards from set ${setId}:`, error);
         }
-      ];
+      }
 
-      const cards = sampleCards;
+      // If API fails, fallback to sample data
+      if (allCards.length === 0) {
+        console.log('API failed, using fallback sample data...');
+        allCards = [
+          {
+            id: 'sv1-1',
+            name: 'Charizard ex',
+            set: { id: 'sv1', name: 'Scarlet & Violet' },
+            number: '001',
+            rarity: 'Ultra Rare',
+            images: { 
+              small: 'https://images.pokemontcg.io/sv1/1.png',
+              large: 'https://images.pokemontcg.io/sv1/1_hires.png'
+            },
+            flavorText: 'A legendary fire-type Pokemon',
+            artist: 'PLANETA Mochizuki',
+            hp: '330',
+            types: ['Fire']
+          },
+          {
+            id: 'sv1-25',
+            name: 'Pikachu',
+            set: { id: 'sv1', name: 'Scarlet & Violet' },
+            number: '025',
+            rarity: 'Common',
+            images: { 
+              small: 'https://images.pokemontcg.io/sv1/25.png',
+              large: 'https://images.pokemontcg.io/sv1/25_hires.png'
+            },
+            flavorText: 'An electric mouse Pokemon',
+            artist: 'Kouki Saitou',
+            hp: '60',
+            types: ['Lightning']
+          },
+          {
+            id: 'sv2-1',
+            name: 'Pikachu ex',
+            set: { id: 'sv2', name: 'Paldea Evolved' },
+            number: '85',
+            rarity: 'Ultra Rare',
+            images: { 
+              small: 'https://dz3we2x72f7ol.cloudfront.net/expansions/paldea-evolved/en-us/SV02_EN_85.png',
+              large: 'https://dz3we2x72f7ol.cloudfront.net/expansions/paldea-evolved/en-us/SV02_EN_85_hires.png'
+            },
+            flavorText: 'Electric-type Pokemon ex',
+            artist: 'Ayaka Yoshida',
+            hp: '200',
+            types: ['Electric']
+          },
+          {
+            id: 'sv2-2',
+            name: 'Charizard ex',
+            set: { id: 'sv2', name: 'Paldea Evolved' },
+            number: '054',
+            rarity: 'Ultra Rare',
+            images: { 
+              small: 'https://dz3we2x72f7ol.cloudfront.net/expansions/paldea-evolved/en-us/SV02_EN_54.png',
+              large: 'https://dz3we2x72f7ol.cloudfront.net/expansions/paldea-evolved/en-us/SV02_EN_54_hires.png'
+            },
+            flavorText: 'Fire/Flying-type Pokemon ex',
+            artist: 'PLANETA Mochizuki',
+            hp: '330',
+            types: ['Fire']
+          }
+        ];
+      }
+
+      const cards = allCards;
       console.log(`Retrieved ${cards.length} sample cards for demonstration`);
 
       // Get existing collections and product types
