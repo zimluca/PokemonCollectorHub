@@ -162,17 +162,34 @@ export default function Database() {
                   {yearCollections.map((collection) => (
                 <Card 
                   key={collection.id} 
-                  className="pokemon-card cursor-pointer"
+                  className="pokemon-card cursor-pointer overflow-hidden"
                   onClick={() => handleExpansionSelect(collection.id.toString())}
                 >
-                  <CardContent className="p-6 text-center">
-                    <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-pokemon-blue to-pokemon-purple rounded-full flex items-center justify-center">
-                      <Star className="h-8 w-8 text-white" />
+                  <div className="relative">
+                    {collection.imageUrl ? (
+                      <img 
+                        src={collection.imageUrl} 
+                        alt={collection.name}
+                        className="w-full h-32 object-contain bg-gradient-to-r from-pokemon-blue to-pokemon-purple p-4"
+                        onError={(e) => {
+                          // Fallback to icon if image fails to load
+                          e.currentTarget.style.display = 'none';
+                          e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                        }}
+                      />
+                    ) : null}
+                    <div className={`w-full h-32 bg-gradient-to-r from-pokemon-blue to-pokemon-purple flex items-center justify-center ${collection.imageUrl ? 'hidden' : ''}`}>
+                      <Star className="h-12 w-12 text-white" />
                     </div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  </div>
+                  <CardContent className="p-4 text-center">
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">
                       {i18n.language === 'it' ? collection.nameIt : collection.name}
                     </h3>
-                    <p className="text-gray-600 text-sm">
+                    <p className="text-gray-600 text-xs mb-2">
+                      {collection.releaseDate ? new Date(collection.releaseDate).getFullYear() : 'Anno sconosciuto'}
+                    </p>
+                    <p className="text-gray-500 text-xs">
                       {i18n.language === 'it' ? collection.descriptionIt : collection.description}
                     </p>
                   </CardContent>
@@ -195,6 +212,15 @@ export default function Database() {
               >
                 ← {t('back')}
               </Button>
+              {selectedCollectionData?.imageUrl && (
+                <div className="mb-4">
+                  <img 
+                    src={selectedCollectionData.imageUrl} 
+                    alt={selectedCollectionData.name}
+                    className="h-16 mx-auto object-contain"
+                  />
+                </div>
+              )}
               <h2 className="text-3xl font-bold text-gray-900 mb-2">
                 {i18n.language === 'it' ? selectedCollectionData?.nameIt : selectedCollectionData?.name}
               </h2>
