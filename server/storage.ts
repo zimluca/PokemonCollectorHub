@@ -2,16 +2,22 @@ import {
   users, articles, collections, productTypes, products, userCollections,
   type User, type InsertUser, type Article, type InsertArticle,
   type Collection, type InsertCollection, type ProductType, type InsertProductType,
-  type Product, type InsertProduct, type UserCollection, type InsertUserCollection
+  type Product, type InsertProduct, type UserCollection, type InsertUserCollection,
+  loginSchema, registerSchema
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, like, or, desc, ilike } from "drizzle-orm";
+import bcrypt from "bcryptjs";
+import { pokemonAPI, type PokemonTCGCard } from "./pokemon-api";
 
 export interface IStorage {
   // User methods
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  loginUser(username: string, password: string): Promise<User | null>;
+  registerUser(userData: any): Promise<User>;
 
   // Article methods
   getArticles(language?: string): Promise<Article[]>;
@@ -37,6 +43,8 @@ export interface IStorage {
   }): Promise<Product[]>;
   getProduct(id: number): Promise<Product | undefined>;
   createProduct(product: InsertProduct): Promise<Product>;
+  upsertProduct(product: any): Promise<Product>;
+  syncPokemonCards(): Promise<void>;
 
   // User collection methods
   getUserCollection(userId: number): Promise<UserCollection[]>;
@@ -44,436 +52,189 @@ export interface IStorage {
   removeFromUserCollection(userId: number, productId: number): Promise<boolean>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User> = new Map();
-  private articles: Map<number, Article> = new Map();
-  private collections: Map<number, Collection> = new Map();
-  private productTypes: Map<number, ProductType> = new Map();
-  private products: Map<number, Product> = new Map();
-  private userCollections: Map<number, UserCollection> = new Map();
-  
-  private userIdCounter = 1;
-  private articleIdCounter = 1;
-  private collectionIdCounter = 1;
-  private productTypeIdCounter = 1;
-  private productIdCounter = 1;
-  private userCollectionIdCounter = 1;
-
+export class DatabaseStorage implements IStorage {
   constructor() {
     this.initializeData();
   }
 
-  private initializeData() {
-    // Initialize product types
-    const cardType = {
-      id: this.productTypeIdCounter++,
-      name: "Single Cards",
-      nameIt: "Carte Singole",
-      description: "Individual Pokemon cards",
-      descriptionIt: "Carte Pokemon individuali"
-    };
-    this.productTypes.set(cardType.id, cardType);
-
-    const packType = {
-      id: this.productTypeIdCounter++,
-      name: "Booster Packs",
-      nameIt: "Buste",
-      description: "Booster packs containing random cards",
-      descriptionIt: "Buste contenenti carte casuali"
-    };
-    this.productTypes.set(packType.id, packType);
-
-    const etbType = {
-      id: this.productTypeIdCounter++,
-      name: "Elite Trainer Box",
-      nameIt: "Elite Trainer Box",
-      description: "Complete trainer boxes with packs and accessories",
-      descriptionIt: "Scatole complete con buste e accessori"
-    };
-    this.productTypes.set(etbType.id, etbType);
-
-    // Initialize collections
-    const paldea = {
-      id: this.collectionIdCounter++,
-      name: "Paldea Evolved",
-      nameIt: "Paldea Evolved",
-      description: "The latest expansion featuring Paldea region Pokemon",
-      descriptionIt: "L'ultima espansione con Pokemon della regione di Paldea",
-      imageUrl: "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=400&h=300&fit=crop",
-      releaseDate: new Date("2024-06-09")
-    };
-    this.collections.set(paldea.id, paldea);
-
-    const scarletViolet = {
-      id: this.collectionIdCounter++,
-      name: "Scarlet & Violet",
-      nameIt: "Scarlatto e Violetto",
-      description: "Base set of the Scarlet & Violet series",
-      descriptionIt: "Set base della serie Scarlatto e Violetto",
-      imageUrl: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop",
-      releaseDate: new Date("2023-03-31")
-    };
-    this.collections.set(scarletViolet.id, scarletViolet);
-
-    // Initialize sample products - English cards
-    const charizardEN = {
-      id: this.productIdCounter++,
-      name: "Charizard VMAX",
-      nameIt: "Charizard VMAX",
-      description: "Rare Charizard VMAX card",
-      descriptionIt: "Carta rara Charizard VMAX",
-      collectionId: paldea.id,
-      productTypeId: cardType.id,
-      cardNumber: "020/189",
-      rarity: "Rare",
-      language: "en",
-      imageUrl: "https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?w=300&h=400&fit=crop",
-      prices: {
-        cardmarket: 89.99,
-        ebay: 95.00,
-        tcgplayer: 92.50
+  private async initializeData() {
+    try {
+      // Check if data already exists
+      const existingProductTypes = await db.select().from(productTypes).limit(1);
+      if (existingProductTypes.length > 0) {
+        console.log('Database already initialized');
+        return;
       }
-    };
-    this.products.set(charizardEN.id, charizardEN);
 
-    const pikachuEN = {
-      id: this.productIdCounter++,
-      name: "Pikachu V",
-      nameIt: "Pikachu V",
-      description: "Electric-type Pokemon V card",
-      descriptionIt: "Carta Pokemon V di tipo Elettro",
-      collectionId: scarletViolet.id,
-      productTypeId: cardType.id,
-      cardNumber: "025/198",
-      rarity: "Ultra Rare",
-      language: "en",
-      imageUrl: "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=300&h=400&fit=crop",
-      prices: {
-        cardmarket: 45.99,
-        ebay: 52.00,
-        tcgplayer: 48.75
-      }
-    };
-    this.products.set(pikachuEN.id, pikachuEN);
+      console.log('Initializing database with sample data...');
 
-    const mewtwoEN = {
-      id: this.productIdCounter++,
-      name: "Mewtwo EX",
-      nameIt: "Mewtwo EX",
-      description: "Psychic-type legendary Pokemon EX",
-      descriptionIt: "Pokemon EX leggendario di tipo Psico",
-      collectionId: scarletViolet.id,
-      productTypeId: cardType.id,
-      cardNumber: "150/198",
-      rarity: "EX",
-      language: "en",
-      imageUrl: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=300&h=400&fit=crop",
-      prices: {
-        cardmarket: 67.50,
-        ebay: 72.00,
-        tcgplayer: 69.25
-      }
-    };
-    this.products.set(mewtwoEN.id, mewtwoEN);
+      // Initialize product types
+      await db.insert(productTypes).values([
+        {
+          name: "Single Cards",
+          nameIt: "Carte Singole", 
+          description: "Individual Pokemon cards",
+          descriptionIt: "Carte Pokemon individuali"
+        },
+        {
+          name: "Booster Pack",
+          nameIt: "Busta Espansione",
+          description: "Pokemon card booster packs", 
+          descriptionIt: "Buste Pokemon con carte casuali"
+        },
+        {
+          name: "Box Set",
+          nameIt: "Set Scatola", 
+          description: "Complete Pokemon card box sets",
+          descriptionIt: "Set completi di carte Pokemon in scatola"
+        }
+      ]);
 
-    const garchompEN = {
-      id: this.productIdCounter++,
-      name: "Garchomp V",
-      nameIt: "Garchomp V",
-      description: "Dragon-type Pokemon V card",
-      descriptionIt: "Carta Pokemon V di tipo Drago",
-      collectionId: paldea.id,
-      productTypeId: cardType.id,
-      cardNumber: "445/189",
-      rarity: "Ultra Rare",
-      language: "en",
-      imageUrl: "https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?w=300&h=400&fit=crop",
-      prices: {
-        cardmarket: 32.99,
-        ebay: 38.00,
-        tcgplayer: 35.50
-      }
-    };
-    this.products.set(garchompEN.id, garchompEN);
+      // Initialize collections
+      await db.insert(collections).values([
+        {
+          name: "Paldea Evolved",
+          nameIt: "Paldea Evolved",
+          description: "The latest expansion featuring Paldea region Pokemon",
+          descriptionIt: "L'ultima espansione con Pokemon della regione di Paldea",
+          imageUrl: "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=400&h=300&fit=crop",
+          releaseDate: new Date("2024-06-09")
+        },
+        {
+          name: "Scarlet & Violet", 
+          nameIt: "Scarlatto e Violetto",
+          description: "Base set of the Scarlet & Violet series",
+          descriptionIt: "Set base della serie Scarlatto e Violetto",
+          imageUrl: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop",
+          releaseDate: new Date("2023-03-31")
+        }
+      ]);
 
-    const lucarioEN = {
-      id: this.productIdCounter++,
-      name: "Lucario VMAX",
-      nameIt: "Lucario VMAX",
-      description: "Fighting-type Pokemon VMAX",
-      descriptionIt: "Pokemon VMAX di tipo Lotta",
-      collectionId: scarletViolet.id,
-      productTypeId: cardType.id,
-      cardNumber: "448/198",
-      rarity: "VMAX",
-      language: "en",
-      imageUrl: "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=300&h=400&fit=crop",
-      prices: {
-        cardmarket: 78.99,
-        ebay: 85.00,
-        tcgplayer: 81.25
-      }
-    };
-    this.products.set(lucarioEN.id, lucarioEN);
+      // Initialize articles
+      await db.insert(articles).values([
+        {
+          title: "Paldea Evolved Now Available",
+          content: "The highly anticipated Paldea Evolved expansion is now available in stores worldwide.",
+          excerpt: "Discover the latest Pokemon cards from the Paldea region",
+          author: "Pokemon News Team",
+          category: "News", 
+          language: "en",
+          imageUrl: "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=800&h=400&fit=crop",
+          featured: true
+        },
+        {
+          title: "Tips for New Pokemon Card Collectors",
+          content: "Starting your Pokemon card collection can be exciting but overwhelming.",
+          excerpt: "Essential guide for beginning Pokemon card collectors", 
+          author: "Expert Collector",
+          category: "Guide",
+          language: "en",
+          imageUrl: "https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?w=800&h=400&fit=crop", 
+          featured: false
+        }
+      ]);
 
-    // Italian cards
-    const charizardIT = {
-      id: this.productIdCounter++,
-      name: "Charizard VMAX",
-      nameIt: "Charizard VMAX",
-      description: "Rare Charizard VMAX card",
-      descriptionIt: "Carta rara Charizard VMAX",
-      collectionId: paldea.id,
-      productTypeId: cardType.id,
-      cardNumber: "020/189",
-      rarity: "Rare",
-      language: "it",
-      imageUrl: "https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?w=300&h=400&fit=crop",
-      prices: {
-        cardmarket: 75.99,
-        ebay: 82.00,
-        tcgplayer: 78.50
-      }
-    };
-    this.products.set(charizardIT.id, charizardIT);
-
-    const pikachuIT = {
-      id: this.productIdCounter++,
-      name: "Pikachu V",
-      nameIt: "Pikachu V",
-      description: "Electric-type Pokemon V card",
-      descriptionIt: "Carta Pokemon V di tipo Elettro",
-      collectionId: scarletViolet.id,
-      productTypeId: cardType.id,
-      cardNumber: "025/198",
-      rarity: "Ultra Rare",
-      language: "it",
-      imageUrl: "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=300&h=400&fit=crop",
-      prices: {
-        cardmarket: 38.99,
-        ebay: 44.00,
-        tcgplayer: 41.25
-      }
-    };
-    this.products.set(pikachuIT.id, pikachuIT);
-
-    const mewtwoIT = {
-      id: this.productIdCounter++,
-      name: "Mewtwo EX",
-      nameIt: "Mewtwo EX",
-      description: "Psychic-type legendary Pokemon EX",
-      descriptionIt: "Pokemon EX leggendario di tipo Psico",
-      collectionId: scarletViolet.id,
-      productTypeId: cardType.id,
-      cardNumber: "150/198",
-      rarity: "EX",
-      language: "it",
-      imageUrl: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=300&h=400&fit=crop",
-      prices: {
-        cardmarket: 58.50,
-        ebay: 63.00,
-        tcgplayer: 60.25
-      }
-    };
-    this.products.set(mewtwoIT.id, mewtwoIT);
-
-    const garchompIT = {
-      id: this.productIdCounter++,
-      name: "Garchomp V",
-      nameIt: "Garchomp V",
-      description: "Dragon-type Pokemon V card",
-      descriptionIt: "Carta Pokemon V di tipo Drago",
-      collectionId: paldea.id,
-      productTypeId: cardType.id,
-      cardNumber: "445/189",
-      rarity: "Ultra Rare",
-      language: "it",
-      imageUrl: "https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?w=300&h=400&fit=crop",
-      prices: {
-        cardmarket: 28.99,
-        ebay: 33.00,
-        tcgplayer: 30.50
-      }
-    };
-    this.products.set(garchompIT.id, garchompIT);
-
-    const lucarioIT = {
-      id: this.productIdCounter++,
-      name: "Lucario VMAX",
-      nameIt: "Lucario VMAX",
-      description: "Fighting-type Pokemon VMAX",
-      descriptionIt: "Pokemon VMAX di tipo Lotta",
-      collectionId: scarletViolet.id,
-      productTypeId: cardType.id,
-      cardNumber: "448/198",
-      rarity: "VMAX",
-      language: "it",
-      imageUrl: "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=300&h=400&fit=crop",
-      prices: {
-        cardmarket: 68.99,
-        ebay: 74.00,
-        tcgplayer: 71.25
-      }
-    };
-    this.products.set(lucarioIT.id, lucarioIT);
-
-    // Add some booster packs
-    const paldeaPack = {
-      id: this.productIdCounter++,
-      name: "Paldea Evolved Booster Pack",
-      nameIt: "Busta Paldea Evolved",
-      description: "11 card booster pack",
-      descriptionIt: "Busta da 11 carte",
-      collectionId: paldea.id,
-      productTypeId: packType.id,
-      cardNumber: null,
-      rarity: null,
-      language: "en",
-      imageUrl: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=300&h=400&fit=crop",
-      prices: {
-        cardmarket: 3.99,
-        ebay: 4.50,
-        tcgplayer: 4.25
-      }
-    };
-    this.products.set(paldeaPack.id, paldeaPack);
-
-    const scarletPack = {
-      id: this.productIdCounter++,
-      name: "Scarlet & Violet Booster Pack",
-      nameIt: "Busta Scarlatto e Violetto",
-      description: "11 card booster pack",
-      descriptionIt: "Busta da 11 carte",
-      collectionId: scarletViolet.id,
-      productTypeId: packType.id,
-      cardNumber: null,
-      rarity: null,
-      language: "en",
-      imageUrl: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=300&h=400&fit=crop",
-      prices: {
-        cardmarket: 4.25,
-        ebay: 4.75,
-        tcgplayer: 4.50
-      }
-    };
-    this.products.set(scarletPack.id, scarletPack);
-
-    const paldeaETB = {
-      id: this.productIdCounter++,
-      name: "Paldea Evolved Elite Trainer Box",
-      nameIt: "Elite Trainer Box Paldea Evolved",
-      description: "Contains 9 booster packs and accessories",
-      descriptionIt: "Contiene 9 buste e accessori",
-      collectionId: paldea.id,
-      productTypeId: etbType.id,
-      cardNumber: null,
-      rarity: null,
-      language: "en",
-      imageUrl: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=300&h=400&fit=crop",
-      prices: {
-        cardmarket: 39.99,
-        ebay: 45.00,
-        tcgplayer: 42.50
-      }
-    };
-    this.products.set(paldeaETB.id, paldeaETB);
-
-    // Initialize sample articles
-    const featuredArticle = {
-      id: this.articleIdCounter++,
-      title: "Paldea Evolved: Complete Set Review & Investment Guide",
-      content: "Discover the most valuable cards from the latest expansion and learn which ones are worth adding to your collection.",
-      excerpt: "Complete guide to Paldea Evolved set with investment tips",
-      author: "PokeHunter Team",
-      category: "Featured",
-      language: "en",
-      imageUrl: "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=800&h=400&fit=crop",
-      featured: true,
-      publishedAt: new Date()
-    };
-    this.articles.set(featuredArticle.id, featuredArticle);
-
-    const strategyArticle = {
-      id: this.articleIdCounter++,
-      title: "Pack Opening Strategy: Maximizing Your Pulls",
-      content: "Learn the best techniques and timing for opening booster packs to get the most value.",
-      excerpt: "Best practices for booster pack opening",
-      author: "PokeHunter Team",
-      category: "Strategy",
-      language: "en",
-      imageUrl: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=200&fit=crop",
-      featured: false,
-      publishedAt: new Date()
-    };
-    this.articles.set(strategyArticle.id, strategyArticle);
+      console.log('Database initialization completed');
+    } catch (error) {
+      console.error('Error initializing database:', error);
+    }
   }
 
   // User methods
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(user => user.username === username);
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.userIdCounter++;
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
     return user;
+  }
+
+  async createUser(userData: InsertUser): Promise<User> {
+    const hashedPassword = await bcrypt.hash(userData.password, 10);
+    const [user] = await db.insert(users).values({
+      ...userData,
+      password: hashedPassword,
+    }).returning();
+    return user;
+  }
+
+  async loginUser(username: string, password: string): Promise<User | null> {
+    const user = await this.getUserByUsername(username);
+    if (!user) return null;
+
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) return null;
+
+    return user;
+  }
+
+  async registerUser(userData: any): Promise<User> {
+    // Check if user already exists
+    const existingUser = await this.getUserByUsername(userData.username);
+    if (existingUser) {
+      throw new Error("Username already exists");
+    }
+
+    const existingEmail = await this.getUserByEmail(userData.email);
+    if (existingEmail) {
+      throw new Error("Email already registered");
+    }
+
+    return this.createUser(userData);
   }
 
   // Article methods
   async getArticles(language?: string): Promise<Article[]> {
-    const articles = Array.from(this.articles.values());
-    return language ? articles.filter(article => article.language === language) : articles;
+    if (language) {
+      return await db.select().from(articles).where(eq(articles.language, language)).orderBy(desc(articles.publishedAt));
+    }
+    return await db.select().from(articles).orderBy(desc(articles.publishedAt));
   }
 
   async getArticle(id: number): Promise<Article | undefined> {
-    return this.articles.get(id);
+    const [article] = await db.select().from(articles).where(eq(articles.id, id));
+    return article;
   }
 
-  async createArticle(insertArticle: InsertArticle): Promise<Article> {
-    const id = this.articleIdCounter++;
-    const article: Article = {
-      ...insertArticle,
-      id,
-      publishedAt: new Date()
-    };
-    this.articles.set(id, article);
+  async createArticle(articleData: InsertArticle): Promise<Article> {
+    const [article] = await db.insert(articles).values(articleData).returning();
     return article;
   }
 
   // Collection methods
   async getCollections(): Promise<Collection[]> {
-    return Array.from(this.collections.values());
+    return await db.select().from(collections);
   }
 
   async getCollection(id: number): Promise<Collection | undefined> {
-    return this.collections.get(id);
+    const [collection] = await db.select().from(collections).where(eq(collections.id, id));
+    return collection;
   }
 
-  async createCollection(insertCollection: InsertCollection): Promise<Collection> {
-    const id = this.collectionIdCounter++;
-    const collection: Collection = { ...insertCollection, id };
-    this.collections.set(id, collection);
+  async createCollection(collectionData: InsertCollection): Promise<Collection> {
+    const [collection] = await db.insert(collections).values(collectionData).returning();
     return collection;
   }
 
   // Product type methods
   async getProductTypes(): Promise<ProductType[]> {
-    return Array.from(this.productTypes.values());
+    return await db.select().from(productTypes);
   }
 
   async getProductType(id: number): Promise<ProductType | undefined> {
-    return this.productTypes.get(id);
+    const [productType] = await db.select().from(productTypes).where(eq(productTypes.id, id));
+    return productType;
   }
 
-  async createProductType(insertProductType: InsertProductType): Promise<ProductType> {
-    const id = this.productTypeIdCounter++;
-    const productType: ProductType = { ...insertProductType, id };
-    this.productTypes.set(id, productType);
+  async createProductType(productTypeData: InsertProductType): Promise<ProductType> {
+    const [productType] = await db.insert(productTypes).values(productTypeData).returning();
     return productType;
   }
 
@@ -484,214 +245,204 @@ export class MemStorage implements IStorage {
     language?: string;
     search?: string;
   }): Promise<Product[]> {
-    let products = Array.from(this.products.values());
+    let whereConditions = [];
 
     if (filters?.collectionId) {
-      products = products.filter(p => p.collectionId === filters.collectionId);
+      whereConditions.push(eq(products.collectionId, filters.collectionId));
     }
-
     if (filters?.productTypeId) {
-      products = products.filter(p => p.productTypeId === filters.productTypeId);
+      whereConditions.push(eq(products.productTypeId, filters.productTypeId));
     }
-
     if (filters?.language) {
-      products = products.filter(p => p.language === filters.language);
+      whereConditions.push(eq(products.language, filters.language));
     }
-
     if (filters?.search) {
-      const searchTerm = filters.search.toLowerCase();
-      products = products.filter(p => 
-        p.name.toLowerCase().includes(searchTerm) ||
-        p.nameIt?.toLowerCase().includes(searchTerm) ||
-        p.description?.toLowerCase().includes(searchTerm)
-      );
+      whereConditions.push(ilike(products.name, `%${filters.search}%`));
     }
 
-    return products;
-  }
-
-  async getProduct(id: number): Promise<Product | undefined> {
-    return this.products.get(id);
-  }
-
-  async createProduct(insertProduct: InsertProduct): Promise<Product> {
-    const id = this.productIdCounter++;
-    const product: Product = { ...insertProduct, id };
-    this.products.set(id, product);
-    return product;
-  }
-
-  // User collection methods
-  async getUserCollection(userId: number): Promise<UserCollection[]> {
-    return Array.from(this.userCollections.values()).filter(uc => uc.userId === userId);
-  }
-
-  async addToUserCollection(insertUserCollection: InsertUserCollection): Promise<UserCollection> {
-    const id = this.userCollectionIdCounter++;
-    const userCollection: UserCollection = {
-      ...insertUserCollection,
-      id,
-      addedAt: new Date()
-    };
-    this.userCollections.set(id, userCollection);
-    return userCollection;
-  }
-
-  async removeFromUserCollection(userId: number, productId: number): Promise<boolean> {
-    for (const [id, userCollection] of this.userCollections) {
-      if (userCollection.userId === userId && userCollection.productId === productId) {
-        this.userCollections.delete(id);
-        return true;
-      }
-    }
-    return false;
-  }
-}
-
-export class DatabaseStorage implements IStorage {
-  async getUser(id: number): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user || undefined;
-  }
-
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
-    return user || undefined;
-  }
-
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db
-      .insert(users)
-      .values(insertUser)
-      .returning();
-    return user;
-  }
-
-  async getArticles(language?: string): Promise<Article[]> {
-    if (language) {
-      return await db.select().from(articles).where(eq(articles.language, language)).orderBy(desc(articles.publishedAt));
-    }
-    return await db.select().from(articles).orderBy(desc(articles.publishedAt));
-  }
-
-  async getArticle(id: number): Promise<Article | undefined> {
-    const [article] = await db.select().from(articles).where(eq(articles.id, id));
-    return article || undefined;
-  }
-
-  async createArticle(insertArticle: InsertArticle): Promise<Article> {
-    const [article] = await db
-      .insert(articles)
-      .values(insertArticle)
-      .returning();
-    return article;
-  }
-
-  async getCollections(): Promise<Collection[]> {
-    return await db.select().from(collections);
-  }
-
-  async getCollection(id: number): Promise<Collection | undefined> {
-    const [collection] = await db.select().from(collections).where(eq(collections.id, id));
-    return collection || undefined;
-  }
-
-  async createCollection(insertCollection: InsertCollection): Promise<Collection> {
-    const [collection] = await db
-      .insert(collections)
-      .values(insertCollection)
-      .returning();
-    return collection;
-  }
-
-  async getProductTypes(): Promise<ProductType[]> {
-    return await db.select().from(productTypes);
-  }
-
-  async getProductType(id: number): Promise<ProductType | undefined> {
-    const [productType] = await db.select().from(productTypes).where(eq(productTypes.id, id));
-    return productType || undefined;
-  }
-
-  async createProductType(insertProductType: InsertProductType): Promise<ProductType> {
-    const [productType] = await db
-      .insert(productTypes)
-      .values(insertProductType)
-      .returning();
-    return productType;
-  }
-
-  async getProducts(filters?: {
-    collectionId?: number;
-    productTypeId?: number;
-    language?: string;
-    search?: string;
-  }): Promise<Product[]> {
     let query = db.select().from(products);
-    
-    const conditions = [];
-    if (filters?.collectionId) {
-      conditions.push(eq(products.collectionId, filters.collectionId));
-    }
-    if (filters?.productTypeId) {
-      conditions.push(eq(products.productTypeId, filters.productTypeId));
-    }
-    if (filters?.language) {
-      conditions.push(eq(products.language, filters.language));
-    }
-    if (filters?.search) {
-      conditions.push(
-        or(
-          ilike(products.name, `%${filters.search}%`),
-          ilike(products.nameIt, `%${filters.search}%`),
-          ilike(products.description, `%${filters.search}%`),
-          ilike(products.descriptionIt, `%${filters.search}%`)
-        )
-      );
+    if (whereConditions.length > 0) {
+      query = query.where(and(...whereConditions));
     }
 
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions));
-    }
-
-    return await query;
+    return query;
   }
 
   async getProduct(id: number): Promise<Product | undefined> {
     const [product] = await db.select().from(products).where(eq(products.id, id));
-    return product || undefined;
-  }
-
-  async createProduct(insertProduct: InsertProduct): Promise<Product> {
-    const [product] = await db
-      .insert(products)
-      .values(insertProduct)
-      .returning();
     return product;
   }
 
+  async createProduct(productData: InsertProduct): Promise<Product> {
+    const [product] = await db.insert(products).values(productData).returning();
+    return product;
+  }
+
+  async upsertProduct(productData: any): Promise<Product> {
+    // Check if product with tcgId exists
+    if (productData.tcgId) {
+      const existing = await db.select().from(products).where(eq(products.tcgId, productData.tcgId));
+      if (existing.length > 0) {
+        const [product] = await db.update(products)
+          .set({ ...productData, updatedAt: new Date() })
+          .where(eq(products.tcgId, productData.tcgId))
+          .returning();
+        return product;
+      }
+    }
+
+    // Create new product
+    const [product] = await db.insert(products).values(productData).returning();
+    return product;
+  }
+
+  async syncPokemonCards(): Promise<void> {
+    try {
+      console.log('Starting Pokemon cards synchronization...');
+      
+      // For now, create sample Pokemon cards data to simulate API integration
+      // In production, this would use the real Pokemon TCG API
+      const sampleCards = [
+        {
+          id: 'sv1-1',
+          name: 'Charizard ex',
+          set: { id: 'sv1', name: 'Scarlet & Violet' },
+          number: '001',
+          rarity: 'Ultra Rare',
+          images: { 
+            small: 'https://images.pokemontcg.io/sv1/1.png',
+            large: 'https://images.pokemontcg.io/sv1/1_hires.png'
+          },
+          flavorText: 'A legendary fire-type Pokemon',
+          artist: 'PLANETA Mochizuki',
+          hp: '330',
+          types: ['Fire']
+        },
+        {
+          id: 'sv1-25',
+          name: 'Pikachu',
+          set: { id: 'sv1', name: 'Scarlet & Violet' },
+          number: '025',
+          rarity: 'Common',
+          images: { 
+            small: 'https://images.pokemontcg.io/sv1/25.png',
+            large: 'https://images.pokemontcg.io/sv1/25_hires.png'
+          },
+          flavorText: 'An electric mouse Pokemon',
+          artist: 'Kouki Saitou',
+          hp: '60',
+          types: ['Lightning']
+        }
+      ];
+      
+      const cards = sampleCards;
+      console.log(`Retrieved ${cards.length} sample cards for demonstration`);
+
+      // Get existing collections and product types
+      const allCollections = await this.getCollections();
+      const allProductTypes = await this.getProductTypes();
+      
+      const cardProductType = allProductTypes.find(pt => pt.name === "Single Cards");
+      if (!cardProductType) {
+        throw new Error("Single Cards product type not found");
+      }
+
+      let processedCount = 0;
+
+      // Process cards in batches
+      for (const card of cards) {
+        try {
+          // Find or create collection for this set
+          let collection = allCollections.find(c => c.name === card.set.name);
+          if (!collection) {
+            collection = await this.createCollection({
+              name: card.set.name,
+              nameIt: card.set.name,
+              description: `Pokemon TCG set: ${card.set.name}`,
+              descriptionIt: `Set Pokemon TCG: ${card.set.name}`,
+              imageUrl: null,
+              releaseDate: null
+            });
+            allCollections.push(collection);
+          }
+
+          // Prepare product data
+          const productData = {
+            tcgId: card.id,
+            name: card.name,
+            nameIt: card.name, // Could be localized later
+            description: card.flavorText || `${card.name} Pokemon card`,
+            descriptionIt: card.flavorText || `Carta Pokemon ${card.name}`,
+            collectionId: collection.id,
+            productTypeId: cardProductType.id,
+            cardNumber: card.number,
+            rarity: card.rarity,
+            language: "en", // Default to English
+            imageUrl: card.images?.small || null,
+            imageUrlLarge: card.images?.large || null,
+            setName: card.set.name,
+            setId: card.set.id,
+            artist: card.artist || null,
+            hp: card.hp || null,
+            types: card.types || null,
+            prices: null,
+          };
+
+          await this.upsertProduct(productData);
+          processedCount++;
+
+          if (processedCount % 100 === 0) {
+            console.log(`Processed ${processedCount} cards...`);
+          }
+        } catch (error) {
+          console.error(`Error processing card ${card.id}:`, error);
+        }
+      }
+
+      console.log(`Successfully synchronized ${processedCount} Pokemon cards`);
+    } catch (error) {
+      console.error('Error in Pokemon cards synchronization:', error);
+      throw error;
+    }
+  }
+
+  // User collection methods
   async getUserCollection(userId: number): Promise<UserCollection[]> {
     return await db.select().from(userCollections).where(eq(userCollections.userId, userId));
   }
 
-  async addToUserCollection(insertUserCollection: InsertUserCollection): Promise<UserCollection> {
-    const [userCollection] = await db
-      .insert(userCollections)
-      .values(insertUserCollection)
-      .returning();
+  async addToUserCollection(userCollectionData: InsertUserCollection): Promise<UserCollection> {
+    // Check if item already exists in user's collection
+    const existing = await db.select().from(userCollections)
+      .where(and(
+        eq(userCollections.userId, userCollectionData.userId!),
+        eq(userCollections.productId, userCollectionData.productId!)
+      ));
+
+    if (existing.length > 0) {
+      // Update quantity
+      const [updated] = await db.update(userCollections)
+        .set({ 
+          quantity: (existing[0].quantity || 1) + (userCollectionData.quantity || 1) 
+        })
+        .where(eq(userCollections.id, existing[0].id))
+        .returning();
+      return updated;
+    }
+
+    // Add new item
+    const [userCollection] = await db.insert(userCollections).values(userCollectionData).returning();
     return userCollection;
   }
 
   async removeFromUserCollection(userId: number, productId: number): Promise<boolean> {
-    const result = await db
-      .delete(userCollections)
-      .where(
-        and(
-          eq(userCollections.userId, userId),
-          eq(userCollections.productId, productId)
-        )
-      );
-    return result.rowCount > 0;
+    const result = await db.delete(userCollections)
+      .where(and(
+        eq(userCollections.userId, userId),
+        eq(userCollections.productId, productId)
+      ));
+
+    return (result.rowCount || 0) > 0;
   }
 }
 

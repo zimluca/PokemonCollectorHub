@@ -1,9 +1,64 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertArticleSchema, insertProductSchema, insertUserCollectionSchema } from "@shared/schema";
+import { insertArticleSchema, insertProductSchema, insertUserCollectionSchema, loginSchema, registerSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Authentication routes
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const { username, password } = loginSchema.parse(req.body);
+      const user = await storage.loginUser(username, password);
+      
+      if (!user) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+      
+      // Remove password from response
+      const { password: _, ...userWithoutPassword } = user;
+      res.json({ user: userWithoutPassword, message: "Login successful" });
+    } catch (error) {
+      res.status(400).json({ message: "Invalid login data" });
+    }
+  });
+
+  app.post("/api/auth/register", async (req, res) => {
+    try {
+      const user = await storage.registerUser(req.body);
+      // Remove password from response
+      const { password: _, ...userWithoutPassword } = user;
+      res.status(201).json({ user: userWithoutPassword, message: "Registration successful" });
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(400).json({ message: "Registration failed" });
+      }
+    }
+  });
+
+  app.post("/api/auth/logout", async (req, res) => {
+    res.json({ message: "Logout successful" });
+  });
+
+  // Pokemon synchronization route
+  app.post("/api/sync/pokemon", async (req, res) => {
+    try {
+      console.log('Starting Pokemon cards synchronization...');
+      await storage.syncPokemonCards();
+      res.json({ 
+        message: "Pokemon cards synchronized successfully",
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Pokemon sync error:', error);
+      res.status(500).json({ 
+        message: "Failed to synchronize Pokemon cards",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   // Articles routes
   app.get("/api/articles", async (req, res) => {
     try {

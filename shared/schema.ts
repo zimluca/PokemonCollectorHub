@@ -5,7 +5,12 @@ import { z } from "zod";
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
+  email: text("email").notNull().unique(),
   password: text("password").notNull(),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const articles = pgTable("articles", {
@@ -41,6 +46,7 @@ export const productTypes = pgTable("product_types", {
 
 export const products = pgTable("products", {
   id: serial("id").primaryKey(),
+  tcgId: text("tcg_id").unique(), // ID from Pokemon TCG API
   name: text("name").notNull(),
   nameIt: text("name_it"),
   description: text("description"),
@@ -51,7 +57,14 @@ export const products = pgTable("products", {
   rarity: text("rarity"),
   language: text("language").notNull(),
   imageUrl: text("image_url"),
+  imageUrlLarge: text("image_url_large"),
+  setName: text("set_name"),
+  setId: text("set_id"),
+  artist: text("artist"),
+  hp: text("hp"),
+  types: jsonb("types"), // Pokemon types
   prices: jsonb("prices"), // Store price data from different sources
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const userCollections = pgTable("user_collections", {
@@ -64,7 +77,23 @@ export const userCollections = pgTable("user_collections", {
 
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
+  email: true,
   password: true,
+  firstName: true,
+  lastName: true,
+});
+
+export const loginSchema = z.object({
+  username: z.string().min(3, "Username must be at least 3 characters"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+});
+
+export const registerSchema = z.object({
+  username: z.string().min(3, "Username must be at least 3 characters"),
+  email: z.string().email("Please enter a valid email"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
 });
 
 export const insertArticleSchema = createInsertSchema(articles).omit({

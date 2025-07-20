@@ -21,12 +21,14 @@ Preferred communication style: Simple, everyday language.
 
 ### Backend Architecture
 - **Framework**: Express.js with TypeScript
-- **Database**: PostgreSQL with Drizzle ORM (migrated from in-memory storage)
+- **Database**: PostgreSQL with Drizzle ORM (completely migrated from in-memory storage)
 - **Database Provider**: Neon Database (serverless PostgreSQL)
+- **Authentication**: Secure password hashing with bcryptjs
 - **Validation**: Zod schemas for type-safe API validation
 - **API Pattern**: RESTful API with JSON responses
 - **Error Handling**: Centralized error middleware
-- **Data Initialization**: Database seeding with comprehensive Pokemon card data and authentic official card images
+- **Pokemon TCG Integration**: Pokemon TCG API integration for real card data
+- **Data Initialization**: Database seeding with sample data ready for Pokemon TCG sync
 
 ### Database Schema
 The application uses a PostgreSQL database with the following main entities:
