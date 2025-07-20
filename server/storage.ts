@@ -1,9 +1,8 @@
 import { 
   users, articles, collections, productTypes, products, userCollections,
-  type User, type InsertUser, type Article, type InsertArticle,
+  type User, type UpsertUser, type Article, type InsertArticle,
   type Collection, type InsertCollection, type ProductType, type InsertProductType,
-  type Product, type InsertProduct, type UserCollection, type InsertUserCollection,
-  loginSchema, registerSchema
+  type Product, type InsertProduct, type UserCollection, type InsertUserCollection
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, like, or, desc, ilike } from "drizzle-orm";
@@ -11,13 +10,9 @@ import bcrypt from "bcryptjs";
 import { pokemonAPI, type PokemonTCGCard } from "./pokemon-api";
 
 export interface IStorage {
-  // User methods
-  getUser(id: number): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  getUserByEmail(email: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
-  loginUser(username: string, password: string): Promise<User | null>;
-  registerUser(userData: any): Promise<User>;
+  // User methods (Replit Auth)
+  getUser(id: string): Promise<User | undefined>;
+  upsertUser(user: UpsertUser): Promise<User>;
 
   // Article methods
   getArticles(language?: string): Promise<Article[]>;
@@ -47,9 +42,9 @@ export interface IStorage {
   syncPokemonCards(): Promise<void>;
 
   // User collection methods
-  getUserCollection(userId: number): Promise<UserCollection[]>;
+  getUserCollection(userId: string): Promise<UserCollection[]>;
   addToUserCollection(userCollection: InsertUserCollection): Promise<UserCollection>;
-  removeFromUserCollection(userId: number, productId: number): Promise<boolean>;
+  removeFromUserCollection(userId: string, productId: number): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -144,54 +139,25 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  // User methods
-  async getUser(id: number): Promise<User | undefined> {
+  // User methods (Replit Auth)
+  async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(userData)
+      .onConflictDoUpdate({
+        target: users.id,
+        set: {
+          ...userData,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
     return user;
-  }
-
-  async getUserByEmail(email: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.email, email));
-    return user;
-  }
-
-  async createUser(userData: InsertUser): Promise<User> {
-    const hashedPassword = await bcrypt.hash(userData.password, 10);
-    const [user] = await db.insert(users).values({
-      ...userData,
-      password: hashedPassword,
-    }).returning();
-    return user;
-  }
-
-  async loginUser(username: string, password: string): Promise<User | null> {
-    const user = await this.getUserByUsername(username);
-    if (!user) return null;
-
-    const isValidPassword = await bcrypt.compare(password, user.password);
-    if (!isValidPassword) return null;
-
-    return user;
-  }
-
-  async registerUser(userData: any): Promise<User> {
-    // Check if user already exists
-    const existingUser = await this.getUserByUsername(userData.username);
-    if (existingUser) {
-      throw new Error("Username already exists");
-    }
-
-    const existingEmail = await this.getUserByEmail(userData.email);
-    if (existingEmail) {
-      throw new Error("Email already registered");
-    }
-
-    return this.createUser(userData);
   }
 
   // Article methods
@@ -458,7 +424,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // User collection methods
-  async getUserCollection(userId: number): Promise<UserCollection[]> {
+  async getUserCollection(userId: string): Promise<UserCollection[]> {
     return await db.select().from(userCollections).where(eq(userCollections.userId, userId));
   }
 
@@ -486,7 +452,7 @@ export class DatabaseStorage implements IStorage {
     return userCollection;
   }
 
-  async removeFromUserCollection(userId: number, productId: number): Promise<boolean> {
+  async removeFromUserCollection(userId: string, productId: number): Promise<boolean> {
     const result = await db.delete(userCollections)
       .where(and(
         eq(userCollections.userId, userId),

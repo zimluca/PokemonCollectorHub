@@ -1,44 +1,86 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertArticleSchema, insertProductSchema, insertUserCollectionSchema, loginSchema, registerSchema } from "@shared/schema";
+import { insertArticleSchema, insertProductSchema, insertUserCollectionSchema } from "@shared/schema";
+import session from "express-session";
+import connectPg from "connect-pg-simple";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Authentication routes
-  app.post("/api/auth/login", async (req, res) => {
+  // Setup session middleware
+  const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
+  const pgStore = connectPg(session);
+  const sessionStore = new pgStore({
+    conString: process.env.DATABASE_URL,
+    createTableIfMissing: true,
+    ttl: sessionTtl,
+    tableName: "sessions",
+  });
+
+  app.use(session({
+    secret: process.env.SESSION_SECRET || 'temporary-dev-secret-change-in-production',
+    store: sessionStore,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      secure: false, // Set to true in production with HTTPS
+      maxAge: sessionTtl,
+    },
+  }));
+
+  // Simple auth middleware
+  const isAuthenticated = (req: any, res: any, next: any) => {
+    if (req.session && req.session.userId) {
+      return next();
+    }
+    res.status(401).json({ message: "Unauthorized" });
+  };
+
+  // Auth routes
+  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
-      const { username, password } = loginSchema.parse(req.body);
-      const user = await storage.loginUser(username, password);
+      const userId = req.session.userId;
+      const user = await storage.getUser(userId);
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  // Login route - for demo purposes, create a demo user
+  app.post('/api/auth/login', async (req: any, res) => {
+    try {
+      // Create or get demo user
+      const demoUserId = 'demo-user-1';
+      let user = await storage.getUser(demoUserId);
       
       if (!user) {
-        return res.status(401).json({ message: "Invalid credentials" });
+        user = await storage.upsertUser({
+          id: demoUserId,
+          email: 'demo@pokehunter.com',
+          firstName: 'Demo',
+          lastName: 'User',
+          profileImageUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&crop=face'
+        });
       }
-      
-      // Remove password from response
-      const { password: _, ...userWithoutPassword } = user;
-      res.json({ user: userWithoutPassword, message: "Login successful" });
+
+      req.session.userId = user.id;
+      res.json({ user, message: "Login successful" });
     } catch (error) {
-      res.status(400).json({ message: "Invalid login data" });
+      console.error("Login error:", error);
+      res.status(500).json({ message: "Login failed" });
     }
   });
 
-  app.post("/api/auth/register", async (req, res) => {
-    try {
-      const user = await storage.registerUser(req.body);
-      // Remove password from response
-      const { password: _, ...userWithoutPassword } = user;
-      res.status(201).json({ user: userWithoutPassword, message: "Registration successful" });
-    } catch (error) {
-      if (error instanceof Error) {
-        res.status(400).json({ message: error.message });
-      } else {
-        res.status(400).json({ message: "Registration failed" });
+  // Logout route
+  app.post('/api/auth/logout', async (req: any, res) => {
+    req.session.destroy((err: any) => {
+      if (err) {
+        return res.status(500).json({ message: "Logout failed" });
       }
-    }
-  });
-
-  app.post("/api/auth/logout", async (req, res) => {
-    res.json({ message: "Logout successful" });
+      res.json({ message: "Logout successful" });
+    });
   });
 
   // Pokemon synchronization route
@@ -170,10 +212,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // User collection routes
-  app.get("/api/user-collections/:userId", async (req, res) => {
+  // User collection routes (protected)
+  app.get("/api/user-collections/:userId", isAuthenticated, async (req, res) => {
     try {
-      const userId = parseInt(req.params.userId);
+      const userId = req.params.userId;
       const userCollections = await storage.getUserCollection(userId);
       res.json(userCollections);
     } catch (error) {
@@ -181,7 +223,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/user-collections", async (req, res) => {
+  app.post("/api/user-collections", isAuthenticated, async (req, res) => {
     try {
       const userCollectionData = insertUserCollectionSchema.parse(req.body);
       const userCollection = await storage.addToUserCollection(userCollectionData);
@@ -191,9 +233,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/user-collections/:userId/:productId", async (req, res) => {
+  app.delete("/api/user-collections/:userId/:productId", isAuthenticated, async (req, res) => {
     try {
-      const userId = parseInt(req.params.userId);
+      const userId = req.params.userId;
       const productId = parseInt(req.params.productId);
       const success = await storage.removeFromUserCollection(userId, productId);
       if (!success) {

@@ -7,21 +7,29 @@ import { I18nextProvider } from 'react-i18next';
 import i18n from './lib/i18n';
 import { Header } from './components/layout/header';
 import { Footer } from './components/layout/footer';
+import { useAuth } from "@/hooks/useAuth";
 import Home from '@/pages/home';
 import News from '@/pages/news';
 import Database from '@/pages/database';
 import Collection from '@/pages/collection';
-import Login from '@/pages/login';
+import Landing from '@/pages/landing';
 import NotFound from "@/pages/not-found";
 
 function Router() {
+  const { isAuthenticated, isLoading } = useAuth();
+
   return (
     <Switch>
-      <Route path="/" component={Home} />
+      {isLoading || !isAuthenticated ? (
+        <Route path="/" component={Landing} />
+      ) : (
+        <>
+          <Route path="/" component={Home} />
+          <Route path="/collection" component={Collection} />
+        </>
+      )}
       <Route path="/news" component={News} />
       <Route path="/database" component={Database} />
-      <Route path="/collection" component={Collection} />
-      <Route path="/login" component={Login} />
       <Route component={NotFound} />
     </Switch>
   );
