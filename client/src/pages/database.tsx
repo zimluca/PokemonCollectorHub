@@ -188,7 +188,7 @@ export default function Database() {
               {/* Single Cards */}
               <Card 
                 className="pokemon-card cursor-pointer"
-                onClick={() => handleTypeSelect('4')} // Assuming ID 4 is Single Cards
+                onClick={() => handleTypeSelect('1')} // ID 1 is "Carte Singole"
               >
                 <CardContent className="p-8 text-center">
                   <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-r from-pokemon-red to-pokemon-yellow rounded-full flex items-center justify-center">
@@ -202,7 +202,7 @@ export default function Database() {
               {/* Products */}
               <Card 
                 className="pokemon-card cursor-pointer"
-                onClick={() => handleTypeSelect('1')} // Assuming ID 1 is Booster Packs
+                onClick={() => handleTypeSelect('2')} // ID 2 is "Busta Espansione"
               >
                 <CardContent className="p-8 text-center">
                   <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-r from-pokemon-green to-pokemon-blue rounded-full flex items-center justify-center">
