@@ -99,7 +99,7 @@ export interface TCGdxResponse<T> {
   };
 }
 
-const BASE_URL = 'https://api.tcgdx.net/v2';
+const BASE_URL = 'https://tcgdx.dev';
 
 class TCGdxAPI {
   private async fetchWithLanguage<T>(endpoint: string, language: SupportedLanguage = 'en'): Promise<T> {

@@ -2,7 +2,7 @@
 import { eq, desc, sql } from "drizzle-orm";
 import { db } from "./db.js";
 import { products, collections } from "@shared/schema.js";
-import { tcgdxAPI, type SupportedLanguage, type TCGdxCard } from "./tcgdx-api.js";
+import { pokemonMultilingualAPI, type SupportedLanguage } from "./pokemon-multilingual-api.js";
 
 interface MultilingualCardData {
   cardId: number;
@@ -14,33 +14,38 @@ interface MultilingualCardData {
 class MultilingualSync {
   async testTCGdxConnection(): Promise<boolean> {
     try {
-      console.log('Testing TCGdx API connection...');
-      const sets = await tcgdxAPI.getAllSets('en');
-      console.log(`✓ TCGdx connected successfully. Found ${sets.length} sets.`);
-      return sets.length > 0;
+      console.log('Testing Pokemon multilingual API connection...');
+      const connected = await pokemonMultilingualAPI.testConnection();
+      if (connected) {
+        console.log('✓ Pokemon TCG API connected successfully.');
+        // Test basic translations
+        const testTranslations = await pokemonMultilingualAPI.getCardMultilingualNames('Charizard');
+        console.log('Sample translations for Charizard:', testTranslations);
+        return true;
+      } else {
+        console.log('✗ Pokemon TCG API connection failed.');
+        return false;
+      }
     } catch (error) {
-      console.error('✗ TCGdx connection failed:', error);
+      console.error('✗ Connection test failed:', error);
       return false;
     }
   }
 
   async testMultilingualCard(): Promise<void> {
     try {
-      console.log('Testing multilingual card fetch...');
+      console.log('Testing multilingual card translations...');
       
-      // Try to get a card from Base set in multiple languages
-      const cardData = await tcgdxAPI.getCardMultilingual('base1', '1');
+      // Test sample multilingual card
+      const sampleCard = await pokemonMultilingualAPI.getSampleMultilingualCard();
+      console.log('Sample multilingual card:', sampleCard);
       
-      const languages = Object.keys(cardData) as SupportedLanguage[];
-      console.log('Languages tested:', languages);
+      // Test translations for popular Pokemon
+      const testPokemon = ['Pikachu', 'Charizard', 'Blastoise'];
       
-      for (const lang of languages) {
-        const card = cardData[lang];
-        if (card) {
-          console.log(`✓ ${lang.toUpperCase()}: ${card.name} (ID: ${card.id})`);
-        } else {
-          console.log(`✗ ${lang.toUpperCase()}: Not available`);
-        }
+      for (const pokemon of testPokemon) {
+        const translations = await pokemonMultilingualAPI.getCardMultilingualNames(pokemon);
+        console.log(`${pokemon} translations:`, translations);
       }
     } catch (error) {
       console.error('Multilingual test failed:', error);
@@ -59,10 +64,11 @@ class MultilingualSync {
         cardNumber: products.cardNumber,
         name: products.name,
         nameIt: products.nameIt,
-        nameFr: products.nameFr
+        nameFr: products.nameFr,
+        imageUrl: products.imageUrl
       })
       .from(products)
-      .where(sql`${products.tcgId} IS NOT NULL AND (${products.nameFr} IS NULL OR ${products.nameDe} IS NULL)`)
+      .where(sql`${products.tcgId} IS NOT NULL AND ${products.language} = 'en' AND (${products.nameFr} IS NULL OR ${products.nameDe} IS NULL)`)
       .limit(limit);
 
     console.log(`Found ${existingCards.length} cards to enhance with multilingual data.`);
@@ -87,23 +93,22 @@ class MultilingualSync {
         const setId = tcgIdParts[0];
         const localId = tcgIdParts.slice(1).join('-');
         
-        // Get multilingual data for this card
-        const multilingualData = await tcgdxAPI.getCardMultilingual(setId, localId);
+        // Get basic multilingual translations for this card
+        const translations = await pokemonMultilingualAPI.enhanceCardWithBasicTranslations(card.name);
         
         // Prepare update data
         const updateData: any = {};
         
-        if (multilingualData.fr?.name) updateData.nameFr = multilingualData.fr.name;
-        if (multilingualData.de?.name) updateData.nameDe = multilingualData.de.name;
-        if (multilingualData.es?.name) updateData.nameEs = multilingualData.es.name;
-        if (multilingualData.pt?.name) updateData.namePt = multilingualData.pt.name;
-        if (multilingualData.nl?.name) updateData.nameNl = multilingualData.nl.name;
+        if (translations.fr && translations.fr !== card.name) updateData.nameFr = translations.fr;
+        if (translations.de && translations.de !== card.name) updateData.nameDe = translations.de;
+        if (translations.es && translations.es !== card.name) updateData.nameEs = translations.es;
+        if (translations.pt && translations.pt !== card.name) updateData.namePt = translations.pt;
         
-        if (multilingualData.fr?.image) updateData.imageUrlFr = multilingualData.fr.image;
-        if (multilingualData.de?.image) updateData.imageUrlDe = multilingualData.de.image;
-        if (multilingualData.es?.image) updateData.imageUrlEs = multilingualData.es.image;
-        if (multilingualData.pt?.image) updateData.imageUrlPt = multilingualData.pt.image;
-        if (multilingualData.nl?.image) updateData.imageUrlNl = multilingualData.nl.image;
+        // For images, use the same image URL for now (European cards often use same artwork)
+        if (card.imageUrl && translations.fr) updateData.imageUrlFr = card.imageUrl;
+        if (card.imageUrl && translations.de) updateData.imageUrlDe = card.imageUrl;
+        if (card.imageUrl && translations.es) updateData.imageUrlEs = card.imageUrl;
+        if (card.imageUrl && translations.pt) updateData.imageUrlPt = card.imageUrl;
 
         // Update the card with multilingual data
         if (Object.keys(updateData).length > 0) {
@@ -118,8 +123,8 @@ class MultilingualSync {
           console.log(`No multilingual data found for card ${card.id}: ${card.name}`);
         }
         
-        // Add delay to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 300));
+        // Small delay for processing
+        await new Promise(resolve => setTimeout(resolve, 50));
         
       } catch (error) {
         console.error(`Error enhancing card ${card.id}:`, error);
@@ -151,7 +156,7 @@ class MultilingualSync {
         de: cardData.nameDe,
         es: cardData.nameEs,
         pt: cardData.namePt,
-        nl: cardData.nameNl
+
       },
       images: {
         en: cardData.imageUrl,
@@ -160,7 +165,7 @@ class MultilingualSync {
         de: cardData.imageUrlDe,
         es: cardData.imageUrlEs,
         pt: cardData.imageUrlPt,
-        nl: cardData.imageUrlNl
+
       },
       descriptions: {
         en: cardData.description,
@@ -169,7 +174,7 @@ class MultilingualSync {
         de: cardData.descriptionDe,
         es: cardData.descriptionEs,
         pt: cardData.descriptionPt,
-        nl: cardData.descriptionNl
+
       }
     };
   }
@@ -189,7 +194,7 @@ class MultilingualSync {
         german: sql<number>`count(${products.nameDe})`,
         spanish: sql<number>`count(${products.nameEs})`,
         portuguese: sql<number>`count(${products.namePt})`,
-        dutch: sql<number>`count(${products.nameNl})`
+
       })
       .from(products);
 
@@ -199,7 +204,7 @@ class MultilingualSync {
       cardsWithGerman: stats[0].german,
       cardsWithSpanish: stats[0].spanish,
       cardsWithPortuguese: stats[0].portuguese,
-      cardsWithDutch: stats[0].dutch
+
     };
   }
 }

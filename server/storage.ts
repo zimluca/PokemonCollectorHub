@@ -268,6 +268,100 @@ export class DatabaseStorage implements IStorage {
     return product;
   }
 
+  // New method to get multilingual product data
+  async getMultilingualProducts(filters?: {
+    search?: string;
+    collectionId?: number;
+    productTypeId?: number;
+    preferredLanguage?: string;
+  }): Promise<any[]> {
+    try {
+      const baseLanguage = 'en'; // Always use English as base
+      const preferredLang = filters?.preferredLanguage || 'en';
+      
+      let whereConditions = [];
+      
+      // Always filter for base language (English) to get the multilingual data
+      whereConditions.push(eq(products.language, baseLanguage));
+
+      if (filters) {
+        if (filters.search) {
+          whereConditions.push(ilike(products.name, `%${filters.search}%`));
+        }
+
+        if (filters.collectionId) {
+          whereConditions.push(eq(products.collectionId, filters.collectionId));
+        }
+
+        if (filters.productTypeId) {
+          whereConditions.push(eq(products.productTypeId, filters.productTypeId));
+        }
+      }
+
+      let query = db.select().from(products);
+
+      if (whereConditions.length > 0) {
+        query = query.where(and(...whereConditions));
+      }
+
+      const results = await query.orderBy(sql`CAST(NULLIF(REGEXP_REPLACE(${products.cardNumber}, '[^0-9]', '', 'g'), '') AS INTEGER) ASC NULLS LAST`);
+      
+      // Transform results to show preferred language data
+      return results.map(row => {
+        let displayName = row.name;
+        let displayImageUrl = row.imageUrl;
+        let displayDescription = row.description;
+
+        // Use preferred language if available
+        if (preferredLang === 'fr' && row.nameFr) {
+          displayName = row.nameFr;
+          displayImageUrl = row.imageUrlFr || row.imageUrl;
+          displayDescription = row.descriptionFr || row.description;
+        } else if (preferredLang === 'de' && row.nameDe) {
+          displayName = row.nameDe;
+          displayImageUrl = row.imageUrlDe || row.imageUrl;
+          displayDescription = row.descriptionDe || row.description;
+        } else if (preferredLang === 'es' && row.nameEs) {
+          displayName = row.nameEs;
+          displayImageUrl = row.imageUrlEs || row.imageUrl;
+          displayDescription = row.descriptionEs || row.description;
+        } else if (preferredLang === 'pt' && row.namePt) {
+          displayName = row.namePt;
+          displayImageUrl = row.imageUrlPt || row.imageUrl;
+          displayDescription = row.descriptionPt || row.description;
+        }
+
+        return {
+          id: row.id,
+          tcgId: row.tcgId,
+          setId: row.setId,
+          cardNumber: row.cardNumber,
+          name: displayName,
+          imageUrl: displayImageUrl,
+          description: displayDescription,
+          collectionId: row.collectionId,
+          productTypeId: row.productTypeId,
+          rarity: row.rarity,
+          hp: row.hp,
+          types: row.types,
+          language: preferredLang,
+          
+          // Include all available translations for frontend use
+          translations: {
+            en: { name: row.name, imageUrl: row.imageUrl, description: row.description },
+            fr: { name: row.nameFr, imageUrl: row.imageUrlFr, description: row.descriptionFr },
+            de: { name: row.nameDe, imageUrl: row.imageUrlDe, description: row.descriptionDe },
+            es: { name: row.nameEs, imageUrl: row.imageUrlEs, description: row.descriptionEs },
+            pt: { name: row.namePt, imageUrl: row.imageUrlPt, description: row.descriptionPt }
+          }
+        };
+      });
+    } catch (error) {
+      console.error('Error in getMultilingualProducts:', error);
+      throw error;
+    }
+  }
+
   async upsertProduct(productData: any): Promise<Product> {
     try {
       // Validate required fields

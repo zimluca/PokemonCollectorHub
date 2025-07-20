@@ -312,6 +312,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get multilingual products (supports language switching)
+  app.get("/api/products/multilingual", async (req, res) => {
+    try {
+      const { search, collectionId, productTypeId, preferredLanguage } = req.query;
+      
+      const products = await storage.getMultilingualProducts({
+        search: search as string,
+        collectionId: collectionId ? parseInt(collectionId as string) : undefined,
+        productTypeId: productTypeId ? parseInt(productTypeId as string) : undefined,
+        preferredLanguage: preferredLanguage as string || 'en',
+      });
+      
+      res.json(products);
+    } catch (error) {
+      console.error('Error fetching multilingual products:', error);
+      res.status(500).json({ message: "Errore nel recupero dei prodotti multilingua" });
+    }
+  });
+
   app.get("/api/products/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
