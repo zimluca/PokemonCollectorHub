@@ -257,6 +257,134 @@ const resources = {
       privacyPolicy: 'Privacy Policy',
       termsOfService: 'Termini di Servizio',
     }
+  },
+  fr: {
+    translation: {
+      // Header
+      home: 'Accueil',
+      news: 'Actualités',
+      database: 'Base de données',
+      collection: 'Ma Collection',
+      login: 'Connexion',
+      
+      // Hero
+      heroTitle: 'La Plateforme Ultime pour Collectionneurs Pokémon',
+      heroSubtitle: 'Suivez votre collection, découvrez de nouvelles cartes et restez informé des dernières nouvelles et prix du JCC Pokémon.',
+      exploreDatabase: 'Explorer la Base',
+      startCollection: 'Commencer Collection',
+      
+      // Database
+      pokemonCardDatabase: 'Base de Données Cartes Pokémon',
+      chooseLanguage: 'Choisissez Votre Langue',
+      selectPreferredLanguage: 'Sélectionnez votre langue préférée pour voir les cartes et contenus',
+      searchCards: 'Rechercher cartes...',
+      back: 'Retour',
+      chooseExpansion: 'Choisir Extension',
+      selectExpansionDescription: 'Sélectionnez une extension de cartes Pokémon à explorer',
+      chooseProductType: 'Choisir Type de Produit',
+      singleCards: 'Cartes Individuelles',
+      singleCardsDescription: 'Cartes Pokémon individuelles de cette extension',
+      products: 'Produits',
+      productsDescription: 'Boosters, coffrets, et collections spéciales',
+      minPrice: 'Prix Min',
+      add: 'Ajouter',
+    }
+  },
+  de: {
+    translation: {
+      // Header
+      home: 'Startseite',
+      news: 'Nachrichten',
+      database: 'Datenbank',
+      collection: 'Meine Sammlung',
+      login: 'Anmelden',
+      
+      // Hero
+      heroTitle: 'Die Ultimative Pokémon-Karten-Sammler-Plattform',
+      heroSubtitle: 'Verfolgen Sie Ihre Sammlung, entdecken Sie neue Karten und bleiben Sie über die neuesten Pokémon-TCG-Nachrichten informiert.',
+      exploreDatabase: 'Datenbank Erkunden',
+      startCollection: 'Sammlung Beginnen',
+      
+      // Database
+      pokemonCardDatabase: 'Pokémon-Karten-Datenbank',
+      chooseLanguage: 'Wählen Sie Ihre Sprache',
+      selectPreferredLanguage: 'Wählen Sie Ihre bevorzugte Sprache für Karten und Inhalte',
+      searchCards: 'Karten suchen...',
+      back: 'Zurück',
+      chooseExpansion: 'Erweiterung Wählen',
+      selectExpansionDescription: 'Wählen Sie eine Pokémon-Kartenerweiterung zum Erkunden',
+      chooseProductType: 'Produkttyp Wählen',
+      singleCards: 'Einzelkarten',
+      singleCardsDescription: 'Einzelne Pokémon-Karten aus dieser Erweiterung',
+      products: 'Produkte',
+      productsDescription: 'Booster-Packs, Boxen und spezielle Sammlungen',
+      minPrice: 'Min. Preis',
+      add: 'Hinzufügen',
+    }
+  },
+  es: {
+    translation: {
+      // Header
+      home: 'Inicio',
+      news: 'Noticias',
+      database: 'Base de Datos',
+      collection: 'Mi Colección',
+      login: 'Iniciar Sesión',
+      
+      // Hero
+      heroTitle: 'La Plataforma Definitiva para Coleccionistas Pokémon',
+      heroSubtitle: 'Rastrea tu colección, descubre nuevas cartas y mantente actualizado con las últimas noticias del JCC Pokémon.',
+      exploreDatabase: 'Explorar Base',
+      startCollection: 'Comenzar Colección',
+      
+      // Database
+      pokemonCardDatabase: 'Base de Datos de Cartas Pokémon',
+      chooseLanguage: 'Elige Tu Idioma',
+      selectPreferredLanguage: 'Selecciona tu idioma preferido para ver cartas y contenido',
+      searchCards: 'Buscar cartas...',
+      back: 'Atrás',
+      chooseExpansion: 'Elegir Expansión',
+      selectExpansionDescription: 'Selecciona una expansión de cartas Pokémon para explorar',
+      chooseProductType: 'Elegir Tipo de Producto',
+      singleCards: 'Cartas Individuales',
+      singleCardsDescription: 'Cartas Pokémon individuales de esta expansión',
+      products: 'Productos',
+      productsDescription: 'Sobres, cajas y colecciones especiales',
+      minPrice: 'Precio Mín',
+      add: 'Añadir',
+    }
+  },
+  pt: {
+    translation: {
+      // Header
+      home: 'Início',
+      news: 'Notícias',
+      database: 'Base de Dados',
+      collection: 'Minha Coleção',
+      login: 'Entrar',
+      
+      // Hero
+      heroTitle: 'A Plataforma Definitiva para Colecionadores Pokémon',
+      heroSubtitle: 'Acompanhe sua coleção, descubra novas cartas e mantenha-se atualizado com as últimas notícias do TCG Pokémon.',
+      exploreDatabase: 'Explorar Base',
+      startCollection: 'Começar Coleção',
+      
+      // Database
+      pokemonCardDatabase: 'Base de Dados de Cartas Pokémon',
+      chooseLanguage: 'Escolha Seu Idioma',
+      selectPreferredLanguage: 'Selecione seu idioma preferido para ver cartas e conteúdo',
+      searchCards: 'Pesquisar cartas...',
+      back: 'Voltar',
+      chooseExpansion: 'Escolher Expansão',
+      selectExpansionDescription: 'Selecione uma expansão de cartas Pokémon para explorar',
+      chooseProductType: 'Escolher Tipo de Produto',
+      singleCards: 'Cartas Individuais',
+      singleCardsDescription: 'Cartas Pokémon individuais desta expansão',
+      products: 'Produtos',
+      productsDescription: 'Boosters, caixas e coleções especiais',
+      minPrice: 'Preço Mín',
+      add: 'Adicionar',
+    }
   }
 };
 
