@@ -6,9 +6,36 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Plus, Heart, Languages, Flame, Star, TrendingUp, Clock } from 'lucide-react';
+import { Search, Plus, Heart, Languages, Flame, Star, TrendingUp, Clock, Eye, DollarSign } from 'lucide-react';
+import { CardDetailsModal } from '@/components/ui/card-details-modal';
 import { queryClient } from '@/lib/queryClient';
 import type { Product, Collection, ProductType } from '@shared/schema';
+
+// Helper functions
+const formatCardName = (card: any): string => {
+  return card.name || 'Unnamed Card';
+};
+
+const formatPrice = (price: number | undefined, currency = 'EUR') => {
+  if (!price) return 'N/A';
+  return new Intl.NumberFormat('it-IT', {
+    style: 'currency',
+    currency: currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(price);
+};
+
+const getRarityColor = (rarity: string) => {
+  switch (rarity?.toLowerCase()) {
+    case 'common': return 'bg-gray-500';
+    case 'uncommon': return 'bg-green-500';
+    case 'rare': return 'bg-blue-500';
+    case 'rare holo': return 'bg-purple-500';
+    case 'ultra rare': return 'bg-yellow-500';
+    default: return 'bg-gray-500';
+  }
+};
 
 export default function Database() {
   const { t, i18n } = useTranslation();
@@ -17,6 +44,18 @@ export default function Database() {
   const [selectedType, setSelectedType] = useState<string>('');
   const [selectedLanguage, setSelectedLanguage] = useState<string>(i18n.language);
   const [step, setStep] = useState<'expansion' | 'type' | 'products'>('expansion');
+  const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleCardDetails = (cardId: number) => {
+    setSelectedCardId(cardId);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedCardId(null);
+  };
 
   // Auto-sync check on component mount
   useEffect(() => {
@@ -75,16 +114,7 @@ export default function Database() {
     }
   };
 
-  const formatPrice = (prices: any) => {
-    if (!prices) return 'N/A';
-    const minPrice = Math.min(...Object.values(prices).filter(p => typeof p === 'number'));
-    return `$${minPrice.toFixed(2)}`;
-  };
 
-  const getPriceProviders = (prices: any) => {
-    if (!prices) return [];
-    return Object.keys(prices).slice(0, 2);
-  };
 
   const handleExpansionSelect = (collectionId: string) => {
     setSelectedCollection(collectionId);
@@ -122,7 +152,7 @@ export default function Database() {
             <div className="text-center">
               <h3 className="text-lg font-semibold text-gray-900 mb-3">Database delle Carte Pokemon</h3>
               <div className="space-y-2 text-sm text-gray-600">
-                <p>Carte Pokemon: <span className="font-medium text-blue-600 text-lg">{syncStatus?.pokemonCards || 0}</span></p>
+                <p>Carte Pokemon: <span className="font-medium text-blue-600 text-lg">{(syncStatus as any)?.pokemonCards || 0}</span></p>
                 <p>Collezioni disponibili: <span className="font-medium">{collections.length}</span></p>
                 {syncStatus?.lastUpdate && (
                   <p className="text-xs">Ultimo aggiornamento: <span className="font-medium">{new Date(syncStatus.lastUpdate).toLocaleDateString('it-IT')}</span></p>
@@ -377,36 +407,48 @@ export default function Database() {
                           </span>
                         </div>
                       </div>
-                      <h3 className="font-bold text-sm mb-1 text-gray-900">{product.name}</h3>
+                      <h3 className="font-bold text-sm mb-1 text-gray-900">
+                        {formatCardName(product)}
+                      </h3>
                       <p className="text-xs text-gray-600 mb-3">
                         {product.cardNumber || 'Product'}
                       </p>
 
-                      {/* Price Comparison */}
+                      {/* Price Display */}
                       <div className="mb-3">
-                        <div className="text-xs text-gray-500 mb-1">{t('minPrice')}:</div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-green-600 font-bold text-lg">
-                            {formatPrice(product.prices)}
-                          </span>
-                          <div className="flex space-x-1">
-                            {getPriceProviders(product.prices).map((provider) => (
-                              <span
-                                key={provider}
-                                className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full font-medium"
-                              >
-                                {provider.substring(0, 3).toUpperCase()}
+                        {(product.prices as any)?.lowPrice || (product.prices as any)?.avgPrice ? (
+                          <div>
+                            <div className="text-xs text-gray-500 mb-1">Prezzo:</div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-green-600 font-bold text-lg">
+                                {formatPrice((product.prices as any).lowPrice || (product.prices as any).avgPrice, (product.prices as any).currency)}
                               </span>
-                            ))}
+                              {(product.prices as any).source && (
+                                <div className="flex items-center space-x-1">
+                                  <DollarSign className="h-3 w-3 text-blue-500" />
+                                  <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full font-medium">
+                                    {(product.prices as any).source.toUpperCase()}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        </div>
+                        ) : (
+                          <div className="text-center py-2">
+                            <DollarSign className="h-4 w-4 mx-auto text-gray-300 mb-1" />
+                            <span className="text-xs text-gray-400">Prezzo non disponibile</span>
+                          </div>
+                        )}
                       </div>
 
                       {/* Action Buttons */}
                       <div className="flex gap-2">
-                        <Button className="flex-1 pokemon-button text-xs">
-                          <Plus className="h-3 w-3 mr-1" />
-                          {t('add')}
+                        <Button 
+                          className="flex-1 pokemon-button text-xs"
+                          onClick={() => handleCardDetails(product.id)}
+                        >
+                          <Eye className="h-3 w-3 mr-1" />
+                          Dettagli
                         </Button>
                         <Button variant="outline" className="text-xs hover:bg-red-50 hover:text-red-600 hover:border-red-300">
                           <Heart className="h-3 w-3" />
@@ -419,6 +461,13 @@ export default function Database() {
             )}
           </div>
         )}
+        
+        {/* Card Details Modal */}
+        <CardDetailsModal
+          cardId={selectedCardId || 0}
+          isOpen={isModalOpen}
+          onClose={closeModal}
+        />
       </div>
     </div>
   );

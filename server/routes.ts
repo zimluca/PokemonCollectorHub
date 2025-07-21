@@ -5,6 +5,7 @@ import { insertArticleSchema, insertProductSchema, insertUserCollectionSchema, l
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { multilingualSync } from "./multilingual-sync.js";
+import { pricingService } from "./pricing-api.js";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup session middleware
@@ -351,6 +352,105 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(product);
     } catch (error) {
       res.status(400).json({ message: "Invalid product data" });
+    }
+  });
+
+  // Pricing routes
+  app.get("/api/products/:id/pricing", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const product = await storage.getProduct(id);
+      
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+
+      // Try to get fresh pricing data
+      const priceData = await pricingService.getBestPriceData(
+        product.tcgId || '',
+        product.name,
+        product.setName || ''
+      );
+
+      if (priceData) {
+        // Update the product with new pricing
+        const updatedPrices = {
+          ...product.prices as any,
+          ...priceData,
+        };
+        
+        await storage.updateProduct(id, { prices: updatedPrices });
+        res.json(priceData);
+      } else {
+        // Return existing prices if available
+        res.json(product.prices || null);
+      }
+    } catch (error) {
+      console.error('Error fetching pricing data:', error);
+      res.status(500).json({ message: "Failed to fetch pricing data" });
+    }
+  });
+
+  app.post("/api/products/:id/pricing", isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { lowPrice, avgPrice, highPrice, trendPrice, currency } = req.body;
+      
+      const manualPrice = pricingService.createManualPrice({
+        lowPrice,
+        avgPrice,
+        highPrice,
+        trendPrice,
+        currency
+      });
+
+      await storage.updateProduct(id, { prices: manualPrice });
+      res.json(manualPrice);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update pricing data" });
+    }
+  });
+
+  // Batch pricing update
+  app.post("/api/pricing/batch-update", async (req, res) => {
+    try {
+      const { cardIds, limit = 50 } = req.body;
+      
+      let cardsToUpdate;
+      if (cardIds && cardIds.length > 0) {
+        // Update specific cards
+        cardsToUpdate = await storage.getProductsByIds(cardIds);
+      } else {
+        // Update cards without recent pricing data
+        cardsToUpdate = await storage.getProductsWithoutRecentPricing(limit);
+      }
+
+      const results = await pricingService.batchUpdatePrices(
+        cardsToUpdate.map(card => ({
+          id: card.id,
+          tcgId: card.tcgId,
+          name: card.name,
+          setName: card.setName
+        }))
+      );
+
+      // Update products in database
+      for (const result of results) {
+        if (result.priceData) {
+          await storage.updateProduct(result.cardId, {
+            prices: result.priceData
+          });
+        }
+      }
+
+      res.json({
+        success: true,
+        updated: results.filter(r => r.priceData !== null).length,
+        total: results.length
+      });
+    } catch (error) {
+      console.error('Error in batch pricing update:', error);
+      res.status(500).json({ message: "Failed to update pricing data" });
     }
   });
 

@@ -268,6 +268,27 @@ export class DatabaseStorage implements IStorage {
     return product;
   }
 
+  async updateProduct(id: number, productData: Partial<typeof products.$inferInsert>): Promise<Product> {
+    const [updatedProduct] = await db.update(products).set(productData).where(eq(products.id, id)).returning();
+    return updatedProduct;
+  }
+
+  async getProductsByIds(ids: number[]): Promise<Product[]> {
+    return db.select().from(products).where(sql`${products.id} = ANY(${ids})`);
+  }
+
+  async getProductsWithoutRecentPricing(limit: number = 50): Promise<Product[]> {
+    return db.select()
+      .from(products)
+      .where(
+        or(
+          isNull(products.prices),
+          sql`(${products.prices}->>'updatedAt')::timestamp < NOW() - INTERVAL '24 hours'`
+        )
+      )
+      .limit(limit);
+  }
+
   // New method to get multilingual product data
   async getMultilingualProducts(filters?: {
     search?: string;
