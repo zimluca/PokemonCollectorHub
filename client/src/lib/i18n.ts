@@ -1,6 +1,92 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
+// Function to detect user's country based on timezone and language
+const detectUserCountry = (): string => {
+  try {
+    // Get user's timezone
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    
+    // Get browser language
+    const browserLang = navigator.language || navigator.languages?.[0] || 'en-US';
+    
+    // Mapping of timezones to likely languages
+    const timezoneToLanguage: Record<string, string> = {
+      // European timezones
+      'Europe/Rome': 'it',
+      'Europe/Milan': 'it',
+      'Europe/Paris': 'fr',
+      'Europe/Berlin': 'de',
+      'Europe/Munich': 'de',
+      'Europe/Vienna': 'de',
+      'Europe/Zurich': 'de',
+      'Europe/Madrid': 'es',
+      'Europe/Barcelona': 'es',
+      'Europe/Lisbon': 'pt',
+      'Europe/London': 'en',
+      // Add more timezone mappings as needed
+    };
+    
+    // Try timezone first
+    if (timezoneToLanguage[timezone]) {
+      return timezoneToLanguage[timezone];
+    }
+    
+    // Fallback to browser language
+    const langCode = browserLang.split('-')[0].toLowerCase();
+    const supportedLanguages = ['en', 'it', 'fr', 'de', 'es', 'pt'];
+    
+    if (supportedLanguages.includes(langCode)) {
+      return langCode;
+    }
+    
+    // Default fallback
+    return 'en';
+  } catch (error) {
+    console.log('Language detection failed, using English as default');
+    return 'en';
+  }
+};
+
+// Function to get user's location via IP (using a free service)
+const detectLocationByIP = async (): Promise<string> => {
+  try {
+    const response = await fetch('https://ipapi.co/json/', {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      const countryCode = data.country_code?.toLowerCase();
+      
+      // Map country codes to languages
+      const countryToLanguage: Record<string, string> = {
+        'it': 'it', // Italy
+        'fr': 'fr', // France
+        'de': 'de', // Germany
+        'at': 'de', // Austria
+        'ch': 'de', // Switzerland (default to German, though it's multilingual)
+        'es': 'es', // Spain
+        'pt': 'pt', // Portugal
+        'br': 'pt', // Brazil
+        'gb': 'en', // United Kingdom
+        'us': 'en', // United States
+        'ca': 'en', // Canada (default to English)
+        'au': 'en', // Australia
+      };
+      
+      return countryToLanguage[countryCode] || 'en';
+    }
+  } catch (error) {
+    console.log('IP-based location detection failed');
+  }
+  
+  return detectUserCountry(); // Fallback to timezone/browser detection
+};
+
 const resources = {
   en: {
     translation: {
@@ -174,15 +260,46 @@ const resources = {
   }
 };
 
-i18n
-  .use(initReactI18next)
-  .init({
-    resources,
-    lng: 'en',
-    fallbackLng: 'en',
-    interpolation: {
-      escapeValue: false,
-    },
+// Initialize i18n with automatic language detection
+const initializeI18n = async () => {
+  let detectedLanguage = 'en';
+  
+  // Try to get language from localStorage first
+  const savedLanguage = localStorage.getItem('preferred-language');
+  if (savedLanguage && ['en', 'it', 'fr', 'de', 'es', 'pt'].includes(savedLanguage)) {
+    detectedLanguage = savedLanguage;
+  } else {
+    // Try IP-based detection, with fallback to timezone/browser detection
+    try {
+      detectedLanguage = await detectLocationByIP();
+      console.log(`Auto-detected language: ${detectedLanguage}`);
+    } catch (error) {
+      detectedLanguage = detectUserCountry();
+      console.log(`Fallback language detection: ${detectedLanguage}`);
+    }
+  }
+
+  await i18n
+    .use(initReactI18next)
+    .init({
+      resources,
+      lng: detectedLanguage,
+      fallbackLng: 'en',
+      interpolation: {
+        escapeValue: false,
+      },
+    });
+
+  // Save the detected language to localStorage
+  localStorage.setItem('preferred-language', detectedLanguage);
+  
+  // Listen for language changes and save them
+  i18n.on('languageChanged', (lng) => {
+    localStorage.setItem('preferred-language', lng);
   });
+};
+
+// Initialize i18n
+initializeI18n().catch(console.error);
 
 export default i18n;

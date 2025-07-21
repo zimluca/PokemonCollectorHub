@@ -1,13 +1,12 @@
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
-import { LanguageSelector } from '@/components/ui/language-selector';
-import { User, Menu, LogOut, Settings, Zap } from 'lucide-react';
+import { User, Menu, LogOut, Settings, Zap, Globe } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/hooks/useAuth';
 
 export function Header() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [location] = useLocation();
   const { user, isAuthenticated, isLoading } = useAuth();
 
@@ -71,7 +70,38 @@ export function Header() {
 
           {/* Language Selector & User Menu */}
           <div className="flex items-center space-x-4">
-            <LanguageSelector />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
+                  <Globe className="h-4 w-4 mr-1" />
+                  {i18n.language === 'it' ? '🇮🇹 IT' : 
+                   i18n.language === 'fr' ? '🇫🇷 FR' :
+                   i18n.language === 'de' ? '🇩🇪 DE' :
+                   i18n.language === 'es' ? '🇪🇸 ES' :
+                   i18n.language === 'pt' ? '🇵🇹 PT' : '🇬🇧 EN'}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => i18n.changeLanguage('en')}>
+                  🇬🇧 English
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => i18n.changeLanguage('it')}>
+                  🇮🇹 Italiano
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => i18n.changeLanguage('fr')}>
+                  🇫🇷 Français
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => i18n.changeLanguage('de')}>
+                  🇩🇪 Deutsch
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => i18n.changeLanguage('es')}>
+                  🇪🇸 Español
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => i18n.changeLanguage('pt')}>
+                  🇵🇹 Português
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             {!isLoading && isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
