@@ -6,6 +6,7 @@ import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { multilingualSync } from "./multilingual-sync.js";
 import { pricingService } from "./pricing-api.js";
+import { pokemonPriceTracker } from "./pokemon-price-tracker.js";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup session middleware
@@ -306,8 +307,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
         language: req.query.language as string,
         search: req.query.search as string
       };
+      const includePricing = req.query.includePricing === 'true';
       const products = await storage.getProducts(filters);
-      res.json(products);
+      
+      if (includePricing) {
+        // Add pricing data for each product
+        const productsWithPricing = products.map(product => {
+          let minPrice: number | null = null;
+          
+          // Extract minimum price from existing price data
+          if (product.prices) {
+            const prices = product.prices as any;
+            if (prices.minPrice !== undefined) {
+              minPrice = prices.minPrice;
+            } else if (prices.tcgplayer || prices.cardmarket) {
+              // Calculate from raw pricing data
+              const priceData = { tcgplayer: prices.tcgplayer, cardmarket: prices.cardmarket };
+              minPrice = pokemonPriceTracker.getMinPrice(priceData);
+            }
+          }
+          
+          return {
+            ...product,
+            minPrice: minPrice ? `💶 ${minPrice.toFixed(2)}` : null
+          };
+        });
+        
+        res.json(productsWithPricing);
+      } else {
+        res.json(products);
+      }
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch products" });
     }
@@ -355,7 +384,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Pricing routes
+  // Pricing routes with PokemonPriceTracker integration
   app.get("/api/products/:id/pricing", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
@@ -365,25 +394,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Product not found" });
       }
 
-      // Try to get fresh pricing data
-      const priceData = await pricingService.getBestPriceData(
-        product.tcgId || '',
-        product.name,
-        product.setName || ''
-      );
+      // Try to get pricing data from PokemonPriceTracker
+      const enrichedProduct = await pokemonPriceTracker.enrichProductWithPrices(product);
+      
+      if (enrichedProduct.priceData) {
+        const minPrice = pokemonPriceTracker.getMinPrice(enrichedProduct.priceData);
+        const avgPrice = pokemonPriceTracker.getAveragePrice(enrichedProduct.priceData);
+        const trendPrice = pokemonPriceTracker.getTrendPrice(enrichedProduct.priceData);
 
-      if (priceData) {
-        // Update the product with new pricing
-        const updatedPrices = {
-          ...product.prices as any,
-          ...priceData,
+        const priceData = {
+          minPrice,
+          avgPrice,
+          trendPrice,
+          currency: 'EUR',
+          source: 'PokemonPriceTracker',
+          rawData: enrichedProduct.priceData,
+          lastUpdated: new Date().toISOString()
         };
-        
-        await storage.updateProduct(id, { prices: updatedPrices });
+
+        // Update the product with new pricing
+        await storage.updateProduct(id, { prices: priceData });
         res.json(priceData);
       } else {
-        // Return existing prices if available
-        res.json(product.prices || null);
+        // Fallback to existing pricing service
+        const priceData = await pricingService.getBestPriceData(
+          product.tcgId || '',
+          product.name,
+          product.setName || ''
+        );
+
+        if (priceData) {
+          await storage.updateProduct(id, { prices: priceData });
+          res.json(priceData);
+        } else {
+          res.json(product.prices || null);
+        }
       }
     } catch (error) {
       console.error('Error fetching pricing data:', error);

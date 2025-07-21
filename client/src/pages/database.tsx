@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, Plus, Heart, Languages, Flame, Star, TrendingUp, Clock, Eye, DollarSign } from 'lucide-react';
-import { CardDetailsModal } from '@/components/ui/card-details-modal';
+import { CardDetailModal } from '@/components/CardDetailModal';
 import { queryClient } from '@/lib/queryClient';
 import type { Product, Collection, ProductType } from '@shared/schema';
 
@@ -75,11 +75,12 @@ export default function Database() {
 
 
   const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
-    queryKey: ['/api/products/multilingual', {
+    queryKey: ['/api/products', {
       search: searchTerm,
       collectionId: selectedCollection || undefined,
       productTypeId: selectedType || undefined,
-      preferredLanguage: selectedLanguage === 'all' ? 'en' : selectedLanguage,
+      language: selectedLanguage === 'all' ? 'en' : selectedLanguage,
+      includePricing: 'true',
     }],
     enabled: step === 'products' && !!selectedCollection && !!selectedType,
   });
@@ -154,8 +155,8 @@ export default function Database() {
               <div className="space-y-2 text-sm text-gray-600">
                 <p>Carte Pokemon: <span className="font-medium text-blue-600 text-lg">{(syncStatus as any)?.pokemonCards || 0}</span></p>
                 <p>Collezioni disponibili: <span className="font-medium">{collections.length}</span></p>
-                {syncStatus?.lastUpdate && (
-                  <p className="text-xs">Ultimo aggiornamento: <span className="font-medium">{new Date(syncStatus.lastUpdate).toLocaleDateString('it-IT')}</span></p>
+                {(syncStatus as any)?.lastUpdate && (
+                  <p className="text-xs">Ultimo aggiornamento: <span className="font-medium">{new Date((syncStatus as any).lastUpdate).toLocaleDateString('it-IT')}</span></p>
                 )}
               </div>
               <div className="mt-3 text-xs text-gray-500 italic">
@@ -416,27 +417,23 @@ export default function Database() {
 
                       {/* Price Display */}
                       <div className="mb-3">
-                        {(product.prices as any)?.lowPrice || (product.prices as any)?.avgPrice ? (
-                          <div>
-                            <div className="text-xs text-gray-500 mb-1">Prezzo:</div>
-                            <div className="flex items-center justify-between">
-                              <span className="text-green-600 font-bold text-lg">
-                                {formatPrice((product.prices as any).lowPrice || (product.prices as any).avgPrice, (product.prices as any).currency)}
-                              </span>
-                              {(product.prices as any).source && (
-                                <div className="flex items-center space-x-1">
-                                  <DollarSign className="h-3 w-3 text-blue-500" />
-                                  <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full font-medium">
-                                    {(product.prices as any).source.toUpperCase()}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
+                        {(product as any).minPrice ? (
+                          <div className="flex items-center justify-center bg-green-50 dark:bg-green-900/20 rounded-lg p-2">
+                            <span className="text-green-600 font-bold text-sm">
+                              {(product as any).minPrice}
+                            </span>
+                          </div>
+                        ) : (product.prices as any)?.minPrice || (product.prices as any)?.avgPrice ? (
+                          <div className="flex items-center justify-center bg-green-50 dark:bg-green-900/20 rounded-lg p-2">
+                            <span className="text-green-600 font-bold text-sm">
+                              💶 {((product.prices as any).minPrice || (product.prices as any).avgPrice).toFixed(2)}
+                            </span>
                           </div>
                         ) : (
-                          <div className="text-center py-2">
-                            <DollarSign className="h-4 w-4 mx-auto text-gray-300 mb-1" />
-                            <span className="text-xs text-gray-400">Prezzo non disponibile</span>
+                          <div className="flex items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-lg p-2">
+                            <span className="text-gray-500 text-sm">
+                              💶 N/A
+                            </span>
                           </div>
                         )}
                       </div>
@@ -463,8 +460,8 @@ export default function Database() {
         )}
         
         {/* Card Details Modal */}
-        <CardDetailsModal
-          cardId={selectedCardId || 0}
+        <CardDetailModal
+          cardId={selectedCardId}
           isOpen={isModalOpen}
           onClose={closeModal}
         />
