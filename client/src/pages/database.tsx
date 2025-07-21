@@ -36,11 +36,11 @@ export default function Database() {
 
 
   const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
-    queryKey: ['/api/products', {
+    queryKey: ['/api/products/multilingual', {
       search: searchTerm,
       collectionId: selectedCollection || undefined,
       productTypeId: selectedType || undefined,
-      language: selectedLanguage === 'all' ? undefined : selectedLanguage,
+      preferredLanguage: selectedLanguage === 'all' ? 'en' : selectedLanguage,
     }],
     enabled: step === 'products' && !!selectedCollection && !!selectedType,
   });
@@ -277,23 +277,53 @@ export default function Database() {
 
             {/* Language Selection */}
             <div className="bg-gradient-to-r from-pokemon-blue to-pokemon-purple text-white rounded-xl p-6 mb-8">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col space-y-4">
                 <div>
                   <h3 className="text-xl font-bold mb-2">{t('chooseLanguage')}</h3>
                   <p className="text-blue-100">{t('selectPreferredLanguage')}</p>
                 </div>
-                <div className="flex items-center space-x-4">
+                <div className="flex flex-wrap items-center gap-2">
                   <Button
                     onClick={() => setSelectedLanguage('en')}
-                    className={`${selectedLanguage === 'en' ? 'bg-white text-pokemon-blue' : 'bg-white/20 text-white'}`}
+                    size="sm"
+                    className={`${selectedLanguage === 'en' ? 'bg-white text-pokemon-blue' : 'bg-white/20 text-white hover:bg-white/30'}`}
                   >
-                    English
+                    🇬🇧 English
                   </Button>
                   <Button
                     onClick={() => setSelectedLanguage('it')}
-                    className={`${selectedLanguage === 'it' ? 'bg-white text-pokemon-blue' : 'bg-white/20 text-white'}`}
+                    size="sm"
+                    className={`${selectedLanguage === 'it' ? 'bg-white text-pokemon-blue' : 'bg-white/20 text-white hover:bg-white/30'}`}
                   >
-                    Italiano
+                    🇮🇹 Italiano
+                  </Button>
+                  <Button
+                    onClick={() => setSelectedLanguage('fr')}
+                    size="sm"
+                    className={`${selectedLanguage === 'fr' ? 'bg-white text-pokemon-blue' : 'bg-white/20 text-white hover:bg-white/30'}`}
+                  >
+                    🇫🇷 Français
+                  </Button>
+                  <Button
+                    onClick={() => setSelectedLanguage('de')}
+                    size="sm"
+                    className={`${selectedLanguage === 'de' ? 'bg-white text-pokemon-blue' : 'bg-white/20 text-white hover:bg-white/30'}`}
+                  >
+                    🇩🇪 Deutsch
+                  </Button>
+                  <Button
+                    onClick={() => setSelectedLanguage('es')}
+                    size="sm"
+                    className={`${selectedLanguage === 'es' ? 'bg-white text-pokemon-blue' : 'bg-white/20 text-white hover:bg-white/30'}`}
+                  >
+                    🇪🇸 Español
+                  </Button>
+                  <Button
+                    onClick={() => setSelectedLanguage('pt')}
+                    size="sm"
+                    className={`${selectedLanguage === 'pt' ? 'bg-white text-pokemon-blue' : 'bg-white/20 text-white hover:bg-white/30'}`}
+                  >
+                    🇵🇹 Português
                   </Button>
                 </div>
               </div>
