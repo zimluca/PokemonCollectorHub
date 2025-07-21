@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Heart, HeartOff, Euro, TrendingUp, BarChart } from "lucide-react";
+import { Heart, HeartOff, Euro, TrendingUp, BarChart, Eye, X } from "lucide-react";
 
 interface CardDetailModalProps {
   cardId: number | null;
@@ -57,6 +57,7 @@ export function CardDetailModal({ cardId, isOpen, onClose }: CardDetailModalProp
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isUpdatingCollection, setIsUpdatingCollection] = useState(false);
+  const [isImageExpanded, setIsImageExpanded] = useState(false);
 
   // Fetch card details
   const { data: card, isLoading: isLoadingCard } = useQuery<Product>({
@@ -182,13 +183,24 @@ export function CardDetailModal({ cardId, isOpen, onClose }: CardDetailModalProp
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Card Image */}
             <div className="space-y-4">
-              <div className="aspect-[2/3] rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
+              <div 
+                className="aspect-[2/3] rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 cursor-pointer hover:shadow-lg transition-shadow relative group"
+                onClick={() => setIsImageExpanded(true)}
+              >
                 {card.imageUrlLarge || card.imageUrl ? (
-                  <img
-                    src={card.imageUrlLarge || card.imageUrl}
-                    alt={getCardName(card)}
-                    className="w-full h-full object-cover object-top"
-                  />
+                  <>
+                    <img
+                      src={card.imageUrlLarge || card.imageUrl}
+                      alt={getCardName(card)}
+                      className="w-full h-full object-cover object-top transition-transform group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity flex items-center justify-center">
+                      <div className="text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2 bg-black bg-opacity-50 px-3 py-2 rounded-lg">
+                        <Eye className="w-4 h-4" />
+                        <span className="text-sm font-medium">Visualizza a schermo intero</span>
+                      </div>
+                    </div>
+                  </>
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-gray-500">
                     <p>Nessuna immagine disponibile</p>
@@ -339,6 +351,35 @@ export function CardDetailModal({ cardId, isOpen, onClose }: CardDetailModalProp
           </div>
         )}
       </DialogContent>
+
+      {/* Full Screen Image Modal */}
+      {isImageExpanded && card && (card.imageUrlLarge || card.imageUrl) && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-90 z-[9999] flex items-center justify-center p-4"
+          onClick={() => setIsImageExpanded(false)}
+        >
+          <div className="relative max-w-4xl max-h-full">
+            <img
+              src={card.imageUrlLarge || card.imageUrl}
+              alt={getCardName(card)}
+              className="max-w-full max-h-full object-contain rounded-lg"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <button
+              onClick={() => setIsImageExpanded(false)}
+              className="absolute top-4 right-4 text-white bg-black bg-opacity-50 hover:bg-opacity-75 rounded-full p-2 transition-all"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <div className="absolute bottom-4 left-4 right-4 text-center">
+              <div className="bg-black bg-opacity-50 text-white px-4 py-2 rounded-lg inline-block">
+                <p className="text-lg font-bold">{getCardName(card)}</p>
+                <p className="text-sm opacity-80">{card.setName} • {card.cardNumber}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </Dialog>
   );
 }
