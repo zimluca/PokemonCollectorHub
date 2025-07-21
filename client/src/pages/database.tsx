@@ -423,11 +423,23 @@ export default function Database() {
                               {(product as any).minPrice}
                             </span>
                           </div>
-                        ) : (product.prices as any)?.minPrice || (product.prices as any)?.avgPrice ? (
+                        ) : (product.prices as any)?.minPrice !== undefined ? (
                           <div className="flex items-center justify-center bg-green-50 dark:bg-green-900/20 rounded-lg p-2">
-                            <span className="text-green-600 font-bold text-sm">
-                              💶 {((product.prices as any).minPrice || (product.prices as any).avgPrice).toFixed(2)}
-                            </span>
+                            <div className="flex flex-col items-center">
+                              <span className="text-green-600 font-bold text-sm">
+                                💶 {(product.prices as any).minPrice.toFixed(2)}
+                              </span>
+                              {(product.prices as any).language && (product.prices as any).source && (
+                                <div className="flex items-center gap-1 mt-1">
+                                  <span className="text-xs bg-blue-100 text-blue-600 px-1 rounded">
+                                    {(product.prices as any).language}
+                                  </span>
+                                  <span className="text-xs text-gray-500">
+                                    {(product.prices as any).source === 'cardmarket' ? 'CM' : 'API'}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         ) : (
                           <div className="flex items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-lg p-2">

@@ -65,9 +65,9 @@ export function CardDetailModal({ cardId, isOpen, onClose }: CardDetailModalProp
     enabled: !!cardId && isOpen,
   });
 
-  // Fetch pricing data
+  // Fetch pricing data from CardMarket
   const { data: pricing, isLoading: isLoadingPricing } = useQuery<PricingData>({
-    queryKey: ['/api/products', cardId, 'pricing'],
+    queryKey: ['/api/products', cardId, 'cardmarket-pricing'],
     enabled: !!cardId && isOpen,
   });
 
@@ -301,8 +301,20 @@ export function CardDetailModal({ cardId, isOpen, onClose }: CardDetailModalProp
                         </div>
                       </div>
 
-                      <div className="text-xs text-gray-500 mt-3">
-                        <p>Fonte: {pricing.source}</p>
+                      <div className="text-xs text-gray-500 mt-3 flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                          <span>Fonte: {pricing.source === 'cardmarket' ? 'CardMarket' : pricing.source}</span>
+                          {(pricing as any).language && (
+                            <span className="bg-blue-100 text-blue-600 px-2 py-0.5 rounded">
+                              {(pricing as any).language}
+                            </span>
+                          )}
+                          {(pricing as any).condition && (
+                            <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
+                              {(pricing as any).condition}
+                            </span>
+                          )}
+                        </div>
                         <p>Ultimo aggiornamento: {new Date(pricing.lastUpdated).toLocaleDateString('it-IT')}</p>
                       </div>
                     </div>

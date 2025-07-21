@@ -7,6 +7,7 @@ import connectPg from "connect-pg-simple";
 import { multilingualSync } from "./multilingual-sync.js";
 import { pricingService } from "./pricing-api.js";
 import { pokemonPriceTracker } from "./pokemon-price-tracker.js";
+import { priceService } from "./price-service.js";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup session middleware
@@ -584,6 +585,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Get multilingual stats error:', error);
       res.status(500).json({ error: 'Failed to get multilingual statistics' });
+    }
+  });
+
+  // CardMarket Web Scraping Routes
+  app.get("/api/cardmarket/prices/:cardName", async (req, res) => {
+    try {
+      const cardName = decodeURIComponent(req.params.cardName);
+      const setName = req.query.set as string;
+      const language = req.query.language as string;
+      
+      console.log(`Fetching CardMarket prices for: ${cardName}${setName ? ` from ${setName}` : ''}`);
+      
+      const prices = await priceService.getCardPrices(cardName, setName, language);
+      
+      if (prices.length === 0) {
+        return res.status(404).json({ 
+          message: "No pricing data found for this card",
+          cardName,
+          setName,
+          language
+        });
+      }
+      
+      res.json({
+        cardName,
+        setName,
+        language,
+        prices,
+        source: 'CardMarket Web Scraping',
+        lastUpdated: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Error fetching CardMarket prices:', error);
+      res.status(500).json({ 
+        message: "Failed to fetch pricing data from CardMarket",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  app.get("/api/products/:id/cardmarket-pricing", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const product = await storage.getProduct(id);
+      
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+
+      const language = req.query.language as string || product.language || 'EN';
+      
+      // Try CardMarket first
+      const cardMarketPrices = await priceService.getCardPrices(
+        product.name,
+        product.setName,
+        language
+      );
+      
+      if (cardMarketPrices.length > 0) {
+        const priceData = cardMarketPrices[0]; // Get the first (best) price
+        
+        res.json({
+          ...priceData,
+          productId: id,
+          productName: product.name,
+          setName: product.setName
+        });
+      } else {
+        res.json({ 
+          message: "No pricing data available from CardMarket",
+          productId: id,
+          productName: product.name,
+          setName: product.setName,
+          language
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching CardMarket pricing data:', error);
+      res.status(500).json({ message: "Failed to fetch pricing data" });
     }
   });
 
